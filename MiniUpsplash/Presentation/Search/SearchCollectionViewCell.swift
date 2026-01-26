@@ -21,6 +21,10 @@ final class SearchCollectionViewCell: UICollectionViewCell {
         return result
     }()
 
+    private let starCountView = {
+        return StarView()
+    }()
+
     static let processor = DownsamplingImageProcessor(size: LayoutConstant.thumbnailPosterSize)
 
     private lazy var optimizedScale: CGFloat = {
@@ -42,7 +46,8 @@ final class SearchCollectionViewCell: UICollectionViewCell {
         configureLayout()
         configureView()
     }
-    
+
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -59,17 +64,25 @@ final class SearchCollectionViewCell: UICollectionViewCell {
                     .transition(.fade(0.2))
                 ]
             )
+
+        starCountView.setInfo(item.likes)
     }
 }
 
 extension SearchCollectionViewCell: BasicViewProtocol {
     func configureHierarchy() {
         contentView.addSubview(imageView)
+        contentView.addSubview(starCountView)
     }
 
     func configureLayout() {
         imageView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
+        }
+
+        starCountView.snp.makeConstraints { make in
+            make.leading.equalTo(imageView).offset(LayoutConstant.capsulePaddingLeading)
+            make.bottom.equalTo(imageView).offset(-LayoutConstant.capsulePaddingLeading)
         }
     }
 
