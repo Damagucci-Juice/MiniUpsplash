@@ -16,6 +16,13 @@ final class SearchViewController: UIViewController {
 
     private let imageCollectionView = UICollectionView(frame: .zero,
                                                        collectionViewLayout: UICollectionViewLayout())
+    private var datasource: [ImageDetail] = []
+
+    private lazy var sortButton = {
+        let result = UIButton()
+        result.setTitle("최신순", for: .normal)
+        return result
+    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -64,13 +71,30 @@ extension SearchViewController: UISearchBarDelegate {
             }
             return
         }
-        print(#function, searchBar.text!)
+
+        let requestDto = SearchRequestDTO(
+            query: searchText,
+            page: nil,
+            perPage: nil,
+            orderBy: nil,
+            color: nil)
+
+        Task {
+            do {
+                let successResponse = try await APIService.shared.getSearch(requestDto).get()
+                self.datasource.append(contentsOf: successResponse.results)
+                self.imageCollectionView.reloadData()
+                self.view.makeToast("\(successResponse.results.count)개의 데이터 도착")
+            } catch {
+                debugPrint(error.localizedDescription)
+            }
+        }
     }
 }
 
 extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        100
+        datasource.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -96,7 +120,8 @@ extension SearchViewController: BasicViewProtocol {
     
     func configureLayout() {
         imageCollectionView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+            make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(Constant.colorFilterViewHeight)
         }
     }
     
