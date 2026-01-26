@@ -112,6 +112,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
             green: CGFloat.random(in: 0...1),
             blue: CGFloat.random(in: 0...1),
             alpha: CGFloat.random(in: 0...1))
+        cell.configure(datasource[indexPath.item])
         return cell
     }
     
@@ -126,7 +127,7 @@ extension SearchViewController: BasicViewProtocol {
     func configureLayout() {
         imageCollectionView.snp.makeConstraints { make in
             make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(Constant.colorFilterViewHeight)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(LayoutConstant.colorFilterViewHeight)
         }
     }
     
