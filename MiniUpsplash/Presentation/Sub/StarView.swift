@@ -46,6 +46,7 @@ final class StarView: UIView {
     }
 
     func setInfo(_ count: Int) {
+        capsuleView.isHidden = count == 0
         countLabel.text = NumberManager.shared.convert(count)
     }
 }
@@ -72,6 +73,7 @@ extension StarView: BasicViewProtocol {
         starImageView.snp.makeConstraints { make in
             make.centerY.equalToSuperview()
             make.leading.equalToSuperview().offset(LayoutConstant.capsulePaddingLeading)
+            make.size.equalTo(LayoutConstant.starSize)
         }
 
         countLabel.snp.makeConstraints { make in

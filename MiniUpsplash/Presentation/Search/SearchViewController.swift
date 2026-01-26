@@ -18,11 +18,46 @@ final class SearchViewController: UIViewController {
                                                        collectionViewLayout: UICollectionViewLayout())
     private var datasource: [ImageDetail] = []
 
+    private let service: APIProtocol
+
     private lazy var sortButton = {
         let result = UIButton()
         result.setTitle("최신순", for: .normal)
         return result
     }()
+
+    // MARK: - Pagination
+    private var page = 1
+    private var isEnd = false
+
+    private func scrollToTop() {
+        guard !datasource.isEmpty else { return }
+        let idxPath = IndexPath(row: 0, section: 0)
+        imageCollectionView.scrollToItem(at: idxPath, at: .top, animated: false)
+    }
+
+    private func resetPage(newKey: String?) {
+        currentSearchKey = newKey
+        page = 1
+        isEnd = false
+        datasource.removeAll()
+    }
+
+    private var currentSearchKey: String?
+
+    // MARK: - initialize
+
+    init(service: APIProtocol) {
+        self.service = service
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    // MARK: - View Life Cycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,8 +65,6 @@ final class SearchViewController: UIViewController {
         configureLayout()
         configureView()
     }
-    
-    private var currentSearchKey: String?
 
     func imageLayout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
@@ -71,25 +104,36 @@ extension SearchViewController: UISearchBarDelegate {
             }
             return
         }
-        let lower = searchText.lowercased()
-        self.currentSearchKey = lower
-        handleSearchReture(lower)
+        resetPage(newKey: searchText.lowercased())
+        handleSearchReturn(searchText.lowercased())
     }
 
-    private func handleSearchReture(_ text: String) {
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        resetPage(newKey: nil)
+        imageCollectionView.reloadData()
+    }
+
+    private func handleSearchReturn(_ text: String) {
         // TODO: - param 채우기
         let requestDto = SearchRequestDTO(
             query: text,
-            page: nil,
-            perPage: nil,
+            page: page,
+            perPage: 30,
             orderBy: nil,
             color: nil)
 
-        Task {
+        Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
-                let successResponse = try await APIService.shared.getSearch(requestDto).get()
+                let successResponse = try await service.getSearch(requestDto).get()
+                self.isEnd = successResponse.total_pages < self.page
+                guard !self.isEnd else { return }
+
                 self.datasource.append(contentsOf: successResponse.results)
                 self.imageCollectionView.reloadData()
+                if page == 1, !datasource.isEmpty {
+                    self.scrollToTop()
+                }
             } catch {
                 debugPrint(error.localizedDescription)
             }
@@ -106,17 +150,15 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionViewCell.identifier,
                                                             for: indexPath)
                 as? SearchCollectionViewCell else { return UICollectionViewCell() }
-
-        cell.contentView.backgroundColor = UIColor(
-            red: CGFloat.random(in: 0...1),
-            green: CGFloat.random(in: 0...1),
-            blue: CGFloat.random(in: 0...1),
-            alpha: CGFloat.random(in: 0...1))
         cell.configure(datasource[indexPath.item])
         return cell
     }
     
-
+    func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        guard indexPath.item == datasource.count - 3, !isEnd, let currentSearchKey else { return }
+        page += 1
+        handleSearchReturn(currentSearchKey)
+    }
 }
 
 extension SearchViewController: BasicViewProtocol {
@@ -151,7 +193,7 @@ extension SearchViewController: BasicViewProtocol {
 
     private func configureSearchController() {
         navigationItem.searchController = searchBarController
-        navigationItem.hidesSearchBarWhenScrolling = true
+        navigationItem.hidesSearchBarWhenScrolling = false
         navigationItem.preferredSearchBarPlacement = .stacked
         searchBarController.searchBar.delegate = self
         searchBarController.searchBar.placeholder = "키워드 검색"

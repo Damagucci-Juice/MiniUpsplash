@@ -25,11 +25,29 @@ struct SearchRequestDTO {
     }
 }
 
-//enum ImageAPIError: Error {
-//    case urlFailure
-//}
+protocol APIProtocol {
+    func getSearch(_ searchDto: SearchRequestDTO) async throws ->  Result<SearchResponseDTO, any Error>
+}
 
-final class APIService {
+final class MockAPIService: APIProtocol {
+    static let shared = MockAPIService()
+
+    private init() { }
+
+    func getSearch(_ searchDto: SearchRequestDTO) async throws ->  Result<SearchResponseDTO, any Error> {
+        let urlStr = "https://mock-0527eea38e7d41a490d2347a55302361.mock.insomnia.run/search/photos"
+
+        let result = try await AF.request(urlStr)
+            .validate()
+            .serializingDecodable(SearchResponseDTO.self)
+            .value
+
+        return .success(result)
+    }
+}
+
+final class APIService: APIProtocol {
+
     static let shared = APIService()
 
     private init() { }
@@ -43,12 +61,12 @@ final class APIService {
         ]
 
         let result = try await AF.request(urlStr,
-                   method: .get,
-                   parameters: param,
-                   headers: header)
-        .validate()
-        .serializingDecodable(SearchResponseDTO.self)
-        .value
+                                          method: .get,
+                                          parameters: param,
+                                          headers: header)
+            .validate()
+            .serializingDecodable(SearchResponseDTO.self)
+            .value
 
         return .success(result)
     }

@@ -15,7 +15,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         self.window = UIWindow(windowScene: windowScene)
-        let nav = UINavigationController(rootViewController: SearchViewController())
+        let nav = UINavigationController(rootViewController: SearchViewController(service: MockAPIService.shared))
         self.window?.rootViewController = nav
         self.window?.makeKeyAndVisible()
     }
