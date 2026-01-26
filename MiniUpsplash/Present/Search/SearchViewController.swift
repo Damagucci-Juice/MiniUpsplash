@@ -30,6 +30,8 @@ final class SearchViewController: UIViewController {
         configureLayout()
         configureView()
     }
+    
+    private var currentSearchKey: String?
 
     func imageLayout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
@@ -62,18 +64,22 @@ extension SearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         guard let searchText = searchBar.text,
               !searchText.isEmpty,
-              // TODO: - 소문자 처리
               searchText.replacingOccurrences(of: " ", with: "").count > 1 else {
-            // TODO: - Alert
             view.makeToast("2글자 이상 입력해주세요")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 searchBar.becomeFirstResponder()
             }
             return
         }
+        let lower = searchText.lowercased()
+        self.currentSearchKey = lower
+        handleSearchReture(lower)
+    }
 
+    private func handleSearchReture(_ text: String) {
+        // TODO: - param 채우기
         let requestDto = SearchRequestDTO(
-            query: searchText,
+            query: text,
             page: nil,
             perPage: nil,
             orderBy: nil,
@@ -84,7 +90,6 @@ extension SearchViewController: UISearchBarDelegate {
                 let successResponse = try await APIService.shared.getSearch(requestDto).get()
                 self.datasource.append(contentsOf: successResponse.results)
                 self.imageCollectionView.reloadData()
-                self.view.makeToast("\(successResponse.results.count)개의 데이터 도착")
             } catch {
                 debugPrint(error.localizedDescription)
             }

@@ -85,11 +85,13 @@ struct ImageDetail: Decodable {
 struct User: Decodable {
     let id: String
     let username: String
-    let profile_image: [ProfileImage]
+    let profile_image: ProfileImage
 }
 
 struct ProfileImage: Decodable {
     let small: String
+    let medium: String
+    let large: String
 }
 
 struct URLs: Decodable {
