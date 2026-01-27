@@ -36,12 +36,29 @@ final class SearchViewController: UIViewController {
 
     private lazy var sortButton = {
         let result = UIButton()
-        result.setTitle("최신순", for: .normal)
+        result.setTitle(OrderBy.relevant.text, for: .normal)
+        result.setImage(UIImage(systemName: "text.line.2.summary"), for: .normal)
+        result.setTitleColor(.black, for: .normal)
+        result.backgroundColor = .white
+        result.tintColor = .black
+        result.addTarget(self, action: #selector(orderButtonTapped), for: .touchUpInside)
+        result.setCorner(LayoutConstant.colorFilterViewHeight / 2)
+        result.setBorder(1.0, color: .black)
         return result
     }()
 
+    @objc private func orderButtonTapped() {
+        orderBy = orderBy == .relevant ? .latest : .relevant
+        sortButton.setTitle(orderBy.text, for: .normal)
+        // TODO: - 컬러와 마찬가지로 선택 값이 바뀔 때 페이지네이션 어떻게 할지 충분한 고민이 필요해 보임...
+        /// 어떻게 해야 말이 되는 Pagination을 구현할 수 있을까 ?
+    }
+
+    private var orderBy = OrderBy.relevant
+
     // MARK: - Pagination
     private var page = 1
+    private let countPerPage = 20
     private var isEnd = false
 
     private func scrollToTop() {
@@ -128,12 +145,11 @@ extension SearchViewController: UISearchBarDelegate {
     }
 
     private func handleSearchReturn(_ text: String) {
-        // TODO: - param 채우기
         let requestDto = SearchRequestDTO(
             query: text,
             page: page,
-            perPage: 30,
-            orderBy: nil,
+            perPage: countPerPage,
+            orderBy: orderBy,
             color: selectedColor)
 
         Task { @MainActor [weak self] in
@@ -179,6 +195,7 @@ extension SearchViewController: BasicViewProtocol {
     func configureHierarchy() {
         view.addSubview(colorScrollView)
         colorScrollView.addSubview(colorStackView)
+        colorScrollView.addSubview(sortButton)
         view.addSubview(imageCollectionView)
     }
     
@@ -188,8 +205,15 @@ extension SearchViewController: BasicViewProtocol {
             make.height.equalTo(LayoutConstant.colorFilterViewHeight)
         }
 
+        sortButton.snp.makeConstraints { make in
+            make.height.equalTo(colorScrollView.frameLayoutGuide)
+            make.width.greaterThanOrEqualTo(LayoutConstant.orderByButtonWidth)
+            make.verticalEdges.trailing.equalTo(colorScrollView.frameLayoutGuide)
+        }
+
         colorStackView.snp.makeConstraints { make in
-            make.edges.equalTo(colorScrollView.contentLayoutGuide)
+            make.leading.verticalEdges.equalTo(colorScrollView.contentLayoutGuide)
+            make.trailing.equalTo(colorScrollView.contentLayoutGuide).inset(LayoutConstant.orderByButtonWidth)
             make.height.equalTo(colorScrollView.frameLayoutGuide)
         }
 

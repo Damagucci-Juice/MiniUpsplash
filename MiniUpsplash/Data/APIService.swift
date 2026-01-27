@@ -19,7 +19,7 @@ struct SearchRequestDTO {
         var result: Parameters = [ "query" : query ]
         if let page { result.updateValue(page, forKey: "page") }
         if let perPage { result.updateValue(perPage, forKey: "per_page") }
-        if let orderBy { result.updateValue(orderBy.text, forKey: "order_by") }
+        if let orderBy { result.updateValue(orderBy.paramValue, forKey: "order_by") }
         if let color { result.updateValue(color.paramValue, forKey: "color") }
         return result
     }
