@@ -79,21 +79,21 @@ enum ColorParam: CaseIterable {
         case .white:
             return "#FFFFFF" //
         case .yellow:
-            return "#FFCC00"
+            return "#FFEF62"
         case .orange:
             return "#FF9500"
         case .red:
-            return "#FF3B30"
+            return "#F04452"
         case .purple:
-            return "#AF52DE"
+            return "#9636E1"
         case .magenta:
             return "#FF2D55"
         case .green:
-            return "#34C759"
+            return "#02B946"
         case .teal:
             return "#5AC8FA"    // #008080
         case .blue:
-            return "#007AFF"
+            return "#3C59FF"
         }
     }
 }
