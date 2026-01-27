@@ -21,7 +21,7 @@ enum OrderBy {
     }
 }
 
-enum ColorParam {
+enum ColorParam: CaseIterable {
     case blackAndWhite
     case black
     case white
@@ -34,7 +34,7 @@ enum ColorParam {
     case teal
     case blue
 
-    var text: String {
+    var paramValue: String {
         switch self {
         case .blackAndWhite:
             return "black_and_white"
@@ -58,6 +58,33 @@ enum ColorParam {
             return "teal"
         case .blue:
             return "blue"
+        }
+    }
+
+    var hex: String {
+        switch self {
+        case .blackAndWhite:
+            return "#FFFFFF" //
+        case .black:
+            return "#000000"
+        case .white:
+            return "#FFFFFF" //
+        case .yellow:
+            return "#FFCC00"
+        case .orange:
+            return "#FF9500"
+        case .red:
+            return "#FF3B30"
+        case .purple:
+            return "#AF52DE"
+        case .magenta:
+            return "#FF2D55"
+        case .green:
+            return "#34C759"
+        case .teal:
+            return "#5AC8FA"    // #008080
+        case .blue:
+            return "#007AFF"
         }
     }
 }

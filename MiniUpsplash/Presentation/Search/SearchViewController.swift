@@ -16,6 +16,18 @@ final class SearchViewController: UIViewController {
 
     private let imageCollectionView = UICollectionView(frame: .zero,
                                                        collectionViewLayout: UICollectionViewLayout())
+
+    private let colorScrollView = UIScrollView()
+    private let colorStackView = {
+        let result = UIStackView()
+        result.axis = .horizontal
+        result.spacing = 10
+        result.distribution = .fillProportionally
+        result.alignment = .fill
+        result.backgroundColor = .brown
+        return result
+    }()
+
     private var datasource: [ImageDetail] = []
 
     private let service: APIProtocol
@@ -163,10 +175,22 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
 
 extension SearchViewController: BasicViewProtocol {
     func configureHierarchy() {
+        view.addSubview(colorScrollView)
+        colorScrollView.addSubview(colorStackView)
         view.addSubview(imageCollectionView)
     }
     
     func configureLayout() {
+        colorScrollView.snp.makeConstraints { make in
+            make.horizontalEdges.top.equalTo(view.safeAreaLayoutGuide)
+            make.height.equalTo(LayoutConstant.colorFilterViewHeight)
+        }
+
+        colorStackView.snp.makeConstraints { make in
+            make.edges.equalTo(colorScrollView.contentLayoutGuide)
+            make.height.equalTo(colorScrollView.frameLayoutGuide)
+        }
+
         imageCollectionView.snp.makeConstraints { make in
             make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(LayoutConstant.colorFilterViewHeight)
@@ -177,6 +201,7 @@ extension SearchViewController: BasicViewProtocol {
         navigationItem.title = "SEARCH PHOTO"
         view.backgroundColor = .white
 
+        configureColorViews()
         configureSearchController()
 
         imageCollectionView.backgroundColor = .brown
@@ -188,7 +213,6 @@ extension SearchViewController: BasicViewProtocol {
             guard let self else { return }
             self.imageCollectionView.collectionViewLayout = self.imageLayout()
         }
-
     }
 
     private func configureSearchController() {
@@ -198,5 +222,22 @@ extension SearchViewController: BasicViewProtocol {
         searchBarController.searchBar.delegate = self
         searchBarController.searchBar.placeholder = "키워드 검색"
         searchBarController.hidesNavigationBarDuringPresentation = false
+    }
+
+    private func configureColorViews() {
+        colorScrollView.showsHorizontalScrollIndicator = false
+
+        // TODO: - Color Select
+        ColorParam.allCases.forEach { param in
+            let view = UIView()
+            view.backgroundColor = UIColor(hex: param.hex)
+            view.snp.makeConstraints { make in
+                make.height.equalTo(LayoutConstant.colorFilterViewHeight - 16)
+                make.width.equalTo(LayoutConstant.colorFilterViewWidth)
+            }
+            view.layer.cornerRadius = LayoutConstant.colorFilterViewHeight / 2
+            view.clipsToBounds = true
+            colorStackView.addArrangedSubview(view)
+        }
     }
 }
