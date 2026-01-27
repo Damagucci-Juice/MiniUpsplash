@@ -237,8 +237,9 @@ extension SearchViewController: BasicViewProtocol {
         }
 
         colorStackView.snp.makeConstraints { make in
-            make.leading.verticalEdges.equalTo(colorScrollView.contentLayoutGuide)
+            make.verticalEdges.equalTo(colorScrollView.contentLayoutGuide)
             make.trailing.equalTo(colorScrollView.contentLayoutGuide).inset(LayoutConstant.orderByButtonWidth)
+            make.leading.equalTo(colorScrollView.contentLayoutGuide).offset(16)
             make.height.equalTo(colorScrollView.frameLayoutGuide)
         }
 
