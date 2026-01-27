@@ -111,7 +111,7 @@ final class SearchViewController: UIViewController {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
         let hInset = 0.0
-        let vInset = 1.0
+        let vInset = 10.0
         let lineSpacing = 2.0
         let interSpacing = 3.0
 
