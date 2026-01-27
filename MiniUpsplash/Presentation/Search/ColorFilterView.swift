@@ -37,16 +37,25 @@ final class ColorFilterButton: UIButton {
     }
 
     func configureButton() {
-        self.setTitleColor(.white, for: .selected)
-        self.setTitleColor(.black, for: .normal)
         self.setTitle(self.colorParam.paramValue.capitalized, for: .normal)
         self.setImage(UIImage(systemName: "circle.fill")?.withTintColor(UIColor(hex: self.colorParam.hex)!,
                                                                         renderingMode: .alwaysOriginal), for: .normal)
-        var buttonConfig = UIButton.Configuration.borderedTinted()
+        var buttonConfig = UIButton.Configuration.bordered()
 
         buttonConfig.titleAlignment = .center
         buttonConfig.imagePlacement = .leading
         buttonConfig.imagePadding = 4
         self.configuration = buttonConfig
+        self.configurationUpdateHandler = { btn in
+            switch btn.state {
+            case .selected:
+                btn.configuration?.baseBackgroundColor = .tintColor
+                btn.configuration?.baseForegroundColor = .systemPink
+            case .normal:
+                btn.configuration?.baseBackgroundColor = .lightGray
+                btn.configuration?.baseForegroundColor = .black
+            default: break
+            }
+        }
     }
 }

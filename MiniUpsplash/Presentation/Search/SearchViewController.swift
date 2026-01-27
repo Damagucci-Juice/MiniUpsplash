@@ -24,8 +24,18 @@ final class SearchViewController: UIViewController {
         result.spacing = 10
         result.distribution = .fillProportionally
         result.alignment = .fill
-        result.backgroundColor = .brown
+        result.backgroundColor = .white
         return result
+    }()
+
+    private let centerLabel: UILabel = {
+        let label = UILabel()
+        label.text = Constant.trySearch
+        label.font = .boldSystemFont(ofSize: 22)
+        label.textColor = .black
+        label.numberOfLines = 0
+        label.textAlignment = .left
+        return label
     }()
 
     private var datasource: [ImageDetail] = []
@@ -141,7 +151,13 @@ extension SearchViewController: UISearchBarDelegate {
 
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         resetPage(newKey: nil)
+        resetCenterLabel()
         imageCollectionView.reloadData()
+    }
+
+    private func resetCenterLabel() {
+        centerLabel.text = Constant.trySearch
+        centerLabel.isHidden = false
     }
 
     private func handleSearchReturn(_ text: String) {
@@ -156,6 +172,14 @@ extension SearchViewController: UISearchBarDelegate {
             guard let self else { return }
             do {
                 let successResponse = try await service.getSearch(requestDto).get()
+                if successResponse.results.isEmpty, self.page == 1 {
+                    centerLabel.text = Constant.emptyResult
+                    centerLabel.isHidden = false
+                    self.imageCollectionView.reloadData()
+                } else {
+                    centerLabel.isHidden = true
+                }
+
                 self.isEnd = successResponse.total_pages < self.page
                 guard !self.isEnd else { return }
 
@@ -197,6 +221,7 @@ extension SearchViewController: BasicViewProtocol {
         colorScrollView.addSubview(colorStackView)
         colorScrollView.addSubview(sortButton)
         view.addSubview(imageCollectionView)
+        view.addSubview(centerLabel)
     }
     
     func configureLayout() {
@@ -221,6 +246,10 @@ extension SearchViewController: BasicViewProtocol {
             make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
             make.top.equalTo(view.safeAreaLayoutGuide).offset(LayoutConstant.colorFilterViewHeight)
         }
+
+        centerLabel.snp.makeConstraints { make in
+            make.center.equalTo(imageCollectionView)
+        }
     }
     
     func configureView() {
@@ -230,7 +259,7 @@ extension SearchViewController: BasicViewProtocol {
         configureColorViews()
         configureSearchController()
 
-        imageCollectionView.backgroundColor = .brown
+        imageCollectionView.backgroundColor = .white
         imageCollectionView.register(SearchCollectionViewCell.self,
                                      forCellWithReuseIdentifier: SearchCollectionViewCell.identifier)
         imageCollectionView.delegate = self
