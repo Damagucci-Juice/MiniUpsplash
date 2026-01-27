@@ -1,34 +1,10 @@
 //
-//  SearchResponse.swift
+//  ColorParam.swift
 //  MiniUpsplash
 //
-//  Created by Gucci on 1/26/26.
+//  Created by Gucci on 1/27/26.
 //
-
 import Foundation
-
-enum OrderBy {
-    case relevant
-    case latest
-
-    var paramValue: String {
-        switch self {
-        case .relevant:
-            return "relevant"
-        case .latest:
-            return "latest"
-        }
-    }
-
-    var text: String {
-        switch self {
-        case .relevant:
-            return "관련순"
-        case .latest:
-            return "최신순"
-        }
-    }
-}
 
 enum ColorParam: CaseIterable {
     case blackAndWhite
@@ -96,45 +72,4 @@ enum ColorParam: CaseIterable {
             return "#3C59FF"
         }
     }
-}
-
-struct SearchResponseDTO: Decodable {
-    let total: Int
-    let total_pages: Int
-    let results: [ImageDetail]
-    
-}
-
-struct ImageDetail: Decodable {
-    let id: String
-    let created_at: String
-    let updated_at: String
-    let width: Int
-    let height: Int
-    let color: String
-    let urls: URLs
-    let likes: Int
-    let asset_type: String
-    let user: User
-}
-
-struct User: Decodable {
-    let id: String
-    let username: String
-    let profile_image: ProfileImage
-}
-
-struct ProfileImage: Decodable {
-    let small: String
-    let medium: String
-    let large: String
-}
-
-struct URLs: Decodable {
-    let raw: String
-    let full: String
-    let regular: String
-    let small: String
-    let thumb: String
-    let small_s3: String
 }
