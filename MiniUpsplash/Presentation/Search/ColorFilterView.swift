@@ -50,7 +50,7 @@ final class ColorFilterButton: UIButton {
             switch btn.state {
             case .selected:
                 btn.configuration?.baseBackgroundColor = .tintColor
-                btn.configuration?.baseForegroundColor = .systemPink
+                btn.configuration?.baseForegroundColor = .systemOrange
             case .normal:
                 btn.configuration?.baseBackgroundColor = .lightGray
                 btn.configuration?.baseForegroundColor = .black
