@@ -32,6 +32,8 @@ final class SearchViewController: UIViewController {
 
     private let service: APIProtocol
 
+    private var selectedColor: ColorParam?
+
     private lazy var sortButton = {
         let result = UIButton()
         result.setTitle("최신순", for: .normal)
@@ -132,7 +134,7 @@ extension SearchViewController: UISearchBarDelegate {
             page: page,
             perPage: 30,
             orderBy: nil,
-            color: nil)
+            color: selectedColor)
 
         Task { @MainActor [weak self] in
             guard let self else { return }
@@ -229,15 +231,38 @@ extension SearchViewController: BasicViewProtocol {
 
         // TODO: - Color Select
         ColorParam.allCases.forEach { param in
-            let view = UIView()
-            view.backgroundColor = UIColor(hex: param.hex)
-            view.snp.makeConstraints { make in
-                make.height.equalTo(LayoutConstant.colorFilterViewHeight - 16)
-                make.width.equalTo(LayoutConstant.colorFilterViewWidth)
-            }
-            view.layer.cornerRadius = LayoutConstant.colorFilterViewHeight / 2
-            view.clipsToBounds = true
-            colorStackView.addArrangedSubview(view)
+            let button = ColorFilterButton(colorParam: param)
+            button.clipsToBounds = true
+            button.onColorButtonTapped = handleColorButtonTapped
+            colorStackView.addArrangedSubview(button)
         }
+    }
+
+    private func handleColorButtonTapped(_ color: ColorParam) {
+        colorStackView.arrangedSubviews.forEach { view in
+            guard let colorButton = view as? ColorFilterButton else { return }
+            if colorButton.colorParam != color {
+                colorButton.isSelected = false
+            }
+        }
+
+        if selectedColor == nil {
+            page = 1
+            selectedColor = color
+        } else if selectedColor != nil {
+            if selectedColor == color { //
+                selectedColor = nil
+            } else {
+                selectedColor = color
+            }
+            page = 1
+        }
+
+        // TODO: - Page 전환은 어떻게 할건가? 이미 요청이 간 상태에서 버튼을 바꾸면 페이지 리셋?
+        /// 한다면 여기서 해야하나?
+        /// 1. 위의 코드의 문제점은 컬러를 그냥 토글만 했을 때는, 이전 페이지 기록이 사라지는 문제가 있음
+        /// 2. 만약에 컬러를 버튼을 눌렀고 검색을 시작했을 때, 중간에 색을 바꿨어... 그러면 그러면 다른 색으로 페이지네이션이 될 건데
+        /// 2-1 red,1 -> red,2 -> green 1 이 되서 총 90장이 보일 것임
+        ///
     }
 }
