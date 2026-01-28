@@ -254,7 +254,7 @@ extension DetailViewController: BasicViewProtocol {
             make.trailing.equalToSuperview().inset(16)
         }
 
-        // TODO: - 차트 나중에 바꿔야함
+        // charts
         guard let hostingController else  { return }
         chartLabel.snp.makeConstraints { make in
             make.leading.equalTo(infoLabel)
@@ -267,7 +267,7 @@ extension DetailViewController: BasicViewProtocol {
         }
 
         hostingController.view.snp.makeConstraints { make in
-            make.top.equalTo(downloadHeaderLabel.snp.bottom).offset(100)
+            make.top.equalTo(chartLabel.snp.bottom).offset(32)
             make.bottom.horizontalEdges.equalToSuperview().inset(16)
             make.height.equalTo(300)
         }
