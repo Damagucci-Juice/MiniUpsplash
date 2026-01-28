@@ -218,6 +218,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
         // cell tapped
         let item = dataSource[indexPath.item]
         let vc = DetailViewController(imageDetail: item)
+        vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
 }

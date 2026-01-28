@@ -10,6 +10,7 @@ import Foundation
 import Alamofire
 
 final class MockAPIService: APIProtocol {
+
     static let shared = MockAPIService()
 
     private init() { }
@@ -31,6 +32,17 @@ final class MockAPIService: APIProtocol {
         let result = try await AF.request(urlStr)
             .validate()
             .serializingDecodable([ImageDetail].self)
+            .value
+
+        return .success(result)
+    }
+
+    func getStatistic(_ imageId: String) async throws -> Result<StaticResponseDTO, any Error> {
+        let urlStr = "https://mock-0527eea38e7d41a490d2347a55302361.mock.insomnia.run/photos/QvIEolyJAIQ/statistics"
+
+        let result = try await AF.request(urlStr)
+            .validate()
+            .serializingDecodable(StaticResponseDTO.self)
             .value
 
         return .success(result)

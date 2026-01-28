@@ -12,19 +12,21 @@ final class DateManager {
 
     private let formatter = {
         let result = DateFormatter()
-        result.dateFormat = "yyyy년 M월 D일"
+        result.dateFormat = "yyyy년 M월 d일"
+        result.locale = Locale(identifier: "ko_KR")
         return result
     }()
 
+    private let isoFormatter = ISO8601DateFormatter()
 
     // param origin : 2022-03-22T04:41:46Z
     // return       : 2022년 3월 22일
     func convert(origin: String) -> String? {
-        if let date = try? Date(origin, strategy: .iso8601) {
-            return formatter.string(from: date)
+        guard let date = isoFormatter.date(from: origin) else {
+            return origin
         }
 
-        return origin
+        return formatter.string(from: date)
     }
 
     private init() { }

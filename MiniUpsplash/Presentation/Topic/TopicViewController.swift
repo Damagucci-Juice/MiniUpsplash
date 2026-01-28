@@ -120,6 +120,7 @@ extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSou
         // cell tapped
         let item = dataSource[collectionView.tag][indexPath.row]
         let vc = DetailViewController(imageDetail: item)
+        vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }
 }

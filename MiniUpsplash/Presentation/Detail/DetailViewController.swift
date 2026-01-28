@@ -55,7 +55,6 @@ final class DetailViewController: UIViewController {
     private let posterImageView = {
         let result = UIImageView()
         result.contentMode = .scaleAspectFit
-        result.image = UIImage(systemName: "star.fill")
         result.clipsToBounds = true
         result.backgroundColor = .clear
         return result
@@ -113,9 +112,16 @@ final class DetailViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        configureHierarchy()
-        configureLayout()
-        configureView()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.setupPosterImageView()
+        }
+
+        Task {
+            await self.fetchStatistics(id: imageDetail.id)
+            configureHierarchy()
+            configureLayout()
+            configureView()
+        }
     }
 
     @available(*, unavailable)
@@ -235,7 +241,6 @@ extension DetailViewController: BasicViewProtocol {
     }
 
     func configureView() {
-        self.hidesBottomBarWhenPushed = true
         navigationController?.navigationBar.prefersLargeTitles = false
 
         profileImageView.kf.setImage(
@@ -244,14 +249,6 @@ extension DetailViewController: BasicViewProtocol {
 
         userNameLabel.text = imageDetail.user.username
         createdAtLabel.text = (DateManager.shared.convert(origin: imageDetail.createdAt) ?? imageDetail.createdAt) + " 게시됨"
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.setupPosterImageView()
-        }
-
-        sizeBodyLabel.text = "\(imageDetail.width) x \(imageDetail.height)"
-        seenBodyLabel.text = NumberManager.shared.convert(1_548_623)
-        downloadBodyLabel.text = NumberManager.shared.convert(388_996)
     }
 
     private func setupPosterImageView() {
@@ -273,5 +270,17 @@ extension DetailViewController: BasicViewProtocol {
                 .cacheSerializer(FormatIndicatedCacheSerializer.jpeg),
             ]
         )
+    }
+
+    private func fetchStatistics(id: String) async {
+        if let result = try? await APIService.shared.getStatistic(id).get() {
+            setupInfoValue(result)
+        }
+    }
+
+    private func setupInfoValue(_ dto: StaticResponseDTO) {
+        sizeBodyLabel.text = "\(imageDetail.width) x \(imageDetail.height)"
+        seenBodyLabel.text = NumberManager.shared.convert(dto.views.total)
+        downloadBodyLabel.text = NumberManager.shared.convert(dto.downloads.total)
     }
 }
