@@ -16,16 +16,25 @@ struct ChartView: View {
                 x: .value("Day", value.date),
                 y: .value("Value", value.value)
             )
+            .foregroundStyle(
+                LinearGradient(
+                    gradient: Gradient(colors: [.blue, .white]),
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
         }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
     }
 }
 
 #Preview {
     let mockData = [
-        ValueInfo(date: "2025-01-11", value: 30),
-        ValueInfo(date: "2025-02-09", value: 30),
-        ValueInfo(date: "2025-02-10", value: 30),
-        ValueInfo(date: "2025-02-13", value: 30),
+        ValueInfo(date: "2025-01-11", value: 1),
+        ValueInfo(date: "2025-02-09", value: 21),
+        ValueInfo(date: "2025-02-10", value: 304),
+        ValueInfo(date: "2025-02-13", value: 20),
     ]
 
     ChartView(historical: mockData)
