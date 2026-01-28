@@ -157,7 +157,7 @@ extension DetailViewController: BasicViewProtocol {
     func configureLayout() {
         // background
         scrollView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+            make.edges.equalToSuperview()
         }
 
         contentView.snp.makeConstraints { make in
@@ -173,12 +173,12 @@ extension DetailViewController: BasicViewProtocol {
 
         userNameLabel.snp.makeConstraints { make in
             make.leading.equalTo(profileImageView.snp.trailing).offset(4)
-            make.top.equalTo(profileImageView)
+            make.top.equalTo(profileImageView).offset(4)
         }
 
         createdAtLabel.snp.makeConstraints { make in
             make.leading.equalTo(userNameLabel)
-            make.bottom.equalTo(profileImageView)
+            make.bottom.equalTo(profileImageView).offset(-4)
         }
 
         heartButton.snp.makeConstraints { make in
@@ -191,8 +191,6 @@ extension DetailViewController: BasicViewProtocol {
         posterImageView.snp.makeConstraints { make in
             make.top.equalTo(profileImageView.snp.bottom).offset(16)
             make.horizontalEdges.equalToSuperview()
-            // TODO: - image height 동적으로 조정
-//            make.height.equalTo(300)
         }
 
         // data
@@ -251,7 +249,9 @@ extension DetailViewController: BasicViewProtocol {
         userNameLabel.text = imageDetail.user.username
         createdAtLabel.text = imageDetail.createdAt
 
-        setupPosterImageView()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.setupPosterImageView()
+        }
 
         sizeBodyLabel.text = "\(imageDetail.width) x \(imageDetail.height)"
         seenBodyLabel.text = NumberManager.shared.convert(1_548_623)
@@ -262,18 +262,19 @@ extension DetailViewController: BasicViewProtocol {
         let deviceScale = UIScreen.main.scale
         let optimizedScale: CGFloat = min(2.0, deviceScale)
 
-        let screenWidth = UIScreen.main.bounds.width
+        let screenWidth = view.window?.windowScene?.screen.bounds.width ?? .zero
         let screenImageWidthRatio = CGFloat(imageDetail.width) / screenWidth
         let targetSize = CGSize(width: screenWidth, height: CGFloat(imageDetail.height) / screenImageWidthRatio)
         let processor = DownsamplingImageProcessor(size: targetSize)
+        let placeHolderView = UIImage(named: "posterPlaceHolder")?.imageWith(newSize: targetSize)
 
         posterImageView.kf.setImage(
             with: URL(string: imageDetail.urls.raw),
+            placeholder: placeHolderView,
             options: [
                 .processor(processor),
                 .scaleFactor(optimizedScale),
                 .cacheSerializer(FormatIndicatedCacheSerializer.jpeg),
-                .transition(.fade(0.2))
             ]
         )
     }

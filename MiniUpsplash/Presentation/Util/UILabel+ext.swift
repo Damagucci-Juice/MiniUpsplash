@@ -17,7 +17,7 @@ extension UILabel {
 
     // username : Brayden Prato
     func setBody() {
-        self.font = .systemFont(ofSize: 12, weight: .regular)
+        self.font = .systemFont(ofSize: 14, weight: .regular)
         self.textColor = .black
         self.numberOfLines = 1
     }
@@ -38,7 +38,7 @@ extension UILabel {
 
     // Detail: 크기, 조회수, 다운로드
     func setSubHeader() {
-        self.font = .boldSystemFont(ofSize: 12)
+        self.font = .boldSystemFont(ofSize: 14)
         self.textColor = .black
         self.numberOfLines = 1
     }
