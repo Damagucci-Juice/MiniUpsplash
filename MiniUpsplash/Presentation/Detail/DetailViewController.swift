@@ -21,13 +21,11 @@ final class DetailViewController: UIViewController {
     private let scrollView = {
         let result = UIScrollView()
         result.showsVerticalScrollIndicator = false
-        result.backgroundColor = .darkGray
         return result
     }()
 
     private let contentView = {
         let result = UIView()
-        result.backgroundColor = .lightGray
         return result
     }()
 
