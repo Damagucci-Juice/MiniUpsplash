@@ -47,8 +47,7 @@ final class TopicViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .white
-        navigationItem.title = "Topics"
+
         Task {
             do {
                 let result = try await service.getTopic(.init(page: nil, kind: .goldenHour)).get()
@@ -135,7 +134,7 @@ extension TopicViewController: BasicViewProtocol {
     
     func configureLayout() {
         scrollView.snp.makeConstraints { make in
-            make.edges.equalTo(view.safeAreaLayoutGuide)
+            make.edges.equalToSuperview()
         }
         
         contentView.snp.makeConstraints { make in
@@ -179,7 +178,12 @@ extension TopicViewController: BasicViewProtocol {
     
     func configureView() {
         scrollView.showsVerticalScrollIndicator = false
-        
+        scrollView.delegate = self
+        view.backgroundColor = .white
+        navigationItem.title = "Our Topic"
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
+
         configureCollectionSection(label: firstLabel, collectionView: firstCollectionView, subject: .goldenHour)
         configureCollectionSection(label: secondLabel, collectionView: secondCollectionView, subject: .businessWork)
         configureCollectionSection(label: thirdLabel, collectionView: thirdCollectionView, subject: .architectureInterior)
