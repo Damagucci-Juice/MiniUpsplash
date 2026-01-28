@@ -19,19 +19,21 @@ final class TopicViewController: UIViewController {
         return label
     }()
 
-//    private let secondLabel: UILabel = {
-//        let label = UILabel()
-//        label.setSectionHeader()
-//        return label
-//    }()
-//
-//    private let thirdLabel: UILabel = {
-//        let label = UILabel()
-//        label.setSectionHeader()
-//        return label
-//    }()
+    private let secondLabel: UILabel = {
+        let label = UILabel()
+        label.setSectionHeader()
+        return label
+    }()
+
+    private let thirdLabel: UILabel = {
+        let label = UILabel()
+        label.setSectionHeader()
+        return label
+    }()
 
     private lazy var firstCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
+    private lazy var secondCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
+    private lazy var thirdCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
 
     private var dataSource: [[ImageDetail]] = Array(repeating: [], count: 3)
 
@@ -47,14 +49,16 @@ final class TopicViewController: UIViewController {
         Task {
             do {
                 let result = try await service.getTopic(.init(page: nil, kind: .goldenHour)).get()
-//                let result2 = try await service.getTopic(.init(page: nil, kind: .businessWork)).get()
-//                let result3 = try await service.getTopic(.init(page: nil, kind: .architectureInterior)).get()
+                let result2 = try await service.getTopic(.init(page: nil, kind: .businessWork)).get()
+                let result3 = try await service.getTopic(.init(page: nil, kind: .architectureInterior)).get()
 
                 dataSource[0].append(contentsOf: result)
-//                dataSource[1].append(contentsOf: result2)
-//                dataSource[2].append(contentsOf: result3)
+                dataSource[1].append(contentsOf: result2)
+                dataSource[2].append(contentsOf: result3)
 
                 firstCollectionView.reloadData()
+                secondCollectionView.reloadData()
+                thirdCollectionView.reloadData()
             } catch {
                 debugPrint(error.localizedDescription)
             }
@@ -99,13 +103,14 @@ final class TopicViewController: UIViewController {
 
 extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        dataSource[0].count
+        dataSource[collectionView.tag].count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionViewCell.identifier, for: indexPath) as? SearchCollectionViewCell else { return UICollectionViewCell() }
-        let item = dataSource[0][indexPath.item]
+        let item = dataSource[collectionView.tag][indexPath.item]
         cell.configure(item)
+        cell.setCorner(16)
         return cell
     }
 }
@@ -114,6 +119,12 @@ extension TopicViewController: BasicViewProtocol {
     func configureHierarchy() {
         view.addSubview(firstLabel)
         view.addSubview(firstCollectionView)
+
+        view.addSubview(secondLabel)
+        view.addSubview(secondCollectionView)
+
+        view.addSubview(thirdLabel)
+        view.addSubview(thirdCollectionView)
     }
 
     func configureLayout() {
@@ -126,21 +137,51 @@ extension TopicViewController: BasicViewProtocol {
             make.horizontalEdges.equalToSuperview()
             make.height.equalTo(LayoutConstant.topicCollectionViewCellHeight)
         }
+
+        secondLabel.snp.makeConstraints { make in
+            make.leading.equalTo(firstLabel)
+            make.top.equalTo(firstCollectionView.snp.bottom).offset(32)
+        }
+
+        secondCollectionView.snp.makeConstraints { make in
+            make.top.equalTo(secondLabel.snp.bottom).offset(16)
+            make.horizontalEdges.equalToSuperview()
+            make.height.equalTo(LayoutConstant.topicCollectionViewCellHeight)
+        }
+
+        thirdLabel.snp.makeConstraints { make in
+            make.leading.equalTo(firstLabel)
+            make.top.equalTo(secondCollectionView.snp.bottom).offset(32)
+        }
+
+        thirdCollectionView.snp.makeConstraints { make in
+            make.top.equalTo(thirdLabel.snp.bottom).offset(16)
+            make.horizontalEdges.equalToSuperview()
+            make.height.equalTo(LayoutConstant.topicCollectionViewCellHeight)
+        }
+
     }
 
     func configureView() {
-        firstCollectionView.backgroundColor = .brown
-        firstLabel.text = TopicSubject.goldenHour.description
+        configureCollectionSection(label: firstLabel, collectionView: firstCollectionView, subject: .goldenHour)
+        configureCollectionSection(label: secondLabel, collectionView: secondCollectionView, subject: .businessWork)
+        configureCollectionSection(label: thirdLabel, collectionView: thirdCollectionView, subject: .architectureInterior)
+        firstCollectionView.tag = 0
+        secondCollectionView.tag = 1
+        thirdCollectionView.tag = 2
+    }
 
-        firstCollectionView.delegate = self
-        firstCollectionView.dataSource = self
-
-        firstCollectionView.register(SearchCollectionViewCell.self,
+    func configureCollectionSection(label: UILabel, collectionView: UICollectionView, subject: TopicSubject) {
+        label.text = subject.description
+        collectionView.backgroundColor = .brown
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.register(SearchCollectionViewCell.self,
                                      forCellWithReuseIdentifier: SearchCollectionViewCell.identifier)
-
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self else { return }
-            self.firstCollectionView.collectionViewLayout = self.layout()
+        collectionView.collectionViewLayout = self.layout()
         }
+
     }
 }
