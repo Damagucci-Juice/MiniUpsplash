@@ -127,13 +127,6 @@ final class DetailViewController: UIViewController {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
-    private lazy var optimizedScale: CGFloat = {
-        // 3.0 기기에서도 1.5의 해상도만 사용
-        let minScaleValue: CGFloat = 1.5
-        let deviceScale = UIScreen.main.scale
-        return min(deviceScale, minScaleValue)
-    }()
 }
 
 
@@ -258,21 +251,30 @@ extension DetailViewController: BasicViewProtocol {
         userNameLabel.text = imageDetail.user.username
         createdAtLabel.text = imageDetail.createdAt
 
-//        let processor = DownsamplingImageProcessor(
-//            size: CGSize(width: contentView.bounds.width, height: 600))
+        setupPosterImageView()
+
+        sizeBodyLabel.text = "\(imageDetail.width) x \(imageDetail.height)"
+        seenBodyLabel.text = NumberManager.shared.convert(1_548_623)
+        downloadBodyLabel.text = NumberManager.shared.convert(388_996)
+    }
+
+    private func setupPosterImageView() {
+        let deviceScale = UIScreen.main.scale
+        let optimizedScale: CGFloat = min(2.0, deviceScale)
+
+        let screenWidth = UIScreen.main.bounds.width
+        let screenImageWidthRatio = CGFloat(imageDetail.width) / screenWidth
+        let targetSize = CGSize(width: screenWidth, height: CGFloat(imageDetail.height) / screenImageWidthRatio)
+        let processor = DownsamplingImageProcessor(size: targetSize)
 
         posterImageView.kf.setImage(
             with: URL(string: imageDetail.urls.raw),
             options: [
-//                .processor(processor),
+                .processor(processor),
                 .scaleFactor(optimizedScale),
                 .cacheSerializer(FormatIndicatedCacheSerializer.jpeg),
                 .transition(.fade(0.2))
             ]
         )
-
-        sizeBodyLabel.text = "\(imageDetail.width) x \(imageDetail.height)"
-        seenBodyLabel.text = NumberManager.shared.convert(1_548_623)
-        downloadBodyLabel.text = NumberManager.shared.convert(388_996)
     }
 }
