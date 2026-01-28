@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct NumberManager {
+final class NumberManager {
     static let shared = NumberManager()
     private let formatter = NumberFormatter()
 
