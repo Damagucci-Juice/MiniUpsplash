@@ -115,6 +115,13 @@ extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSou
         cell.setCorner(16)
         return cell
     }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        // cell tapped
+        let item = dataSource[collectionView.tag][indexPath.row]
+        let vc = DetailViewController(imageDetail: item)
+        navigationController?.pushViewController(vc, animated: true)
+    }
 }
 
 extension TopicViewController: BasicViewProtocol {

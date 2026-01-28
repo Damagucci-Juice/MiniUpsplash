@@ -9,7 +9,7 @@ import UIKit
 
 extension UILabel {
     func setSectionHeader() {
-        font = .boldSystemFont(ofSize: 28)
+        font = .boldSystemFont(ofSize: 22)
         textColor = .black
         numberOfLines = 0
         textAlignment = .left

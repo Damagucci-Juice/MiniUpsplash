@@ -38,7 +38,7 @@ final class SearchViewController: UIViewController {
         return label
     }()
 
-    private var datasource: [ImageDetail] = []
+    private var dataSource: [ImageDetail] = []
 
     private let service: APIProtocol
 
@@ -72,7 +72,7 @@ final class SearchViewController: UIViewController {
     private var isEnd = false
 
     private func scrollToTop() {
-        guard !datasource.isEmpty else { return }
+        guard !dataSource.isEmpty else { return }
         let idxPath = IndexPath(row: 0, section: 0)
         imageCollectionView.scrollToItem(at: idxPath, at: .top, animated: false)
     }
@@ -81,7 +81,7 @@ final class SearchViewController: UIViewController {
         currentSearchKey = newKey
         page = 1
         isEnd = false
-        datasource.removeAll()
+        dataSource.removeAll()
     }
 
     private var currentSearchKey: String?
@@ -183,9 +183,9 @@ extension SearchViewController: UISearchBarDelegate {
                 self.isEnd = successResponse.total_pages < self.page
                 guard !self.isEnd else { return }
 
-                self.datasource.append(contentsOf: successResponse.results)
+                self.dataSource.append(contentsOf: successResponse.results)
                 self.imageCollectionView.reloadData()
-                if page == 1, !datasource.isEmpty {
+                if page == 1, !dataSource.isEmpty {
                     self.scrollToTop()
                 }
             } catch {
@@ -197,21 +197,28 @@ extension SearchViewController: UISearchBarDelegate {
 
 extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        datasource.count
+        dataSource.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionViewCell.identifier,
                                                             for: indexPath)
                 as? SearchCollectionViewCell else { return UICollectionViewCell() }
-        cell.configure(datasource[indexPath.item])
+        cell.configure(dataSource[indexPath.item])
         return cell
     }
     
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        guard indexPath.item == datasource.count - 3, !isEnd, let currentSearchKey else { return }
+        guard indexPath.item == dataSource.count - 3, !isEnd, let currentSearchKey else { return }
         page += 1
         handleSearchReturn(currentSearchKey)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        // cell tapped
+        let item = dataSource[indexPath.item]
+        let vc = DetailViewController(imageDetail: item)
+        navigationController?.pushViewController(vc, animated: true)
     }
 }
 
@@ -312,11 +319,11 @@ extension SearchViewController: BasicViewProtocol {
             page = 1
         }
 
-        // TODO: - Page 전환은 어떻게 할건가? 이미 요청이 간 상태에서 버튼을 바꾸면 페이지 리셋?
+        // TODO: - Page 전환은 어떻게 할건가? 이미 사진 리스트가 화면에 보인 상태에서 컬러나, 정렬 버튼을 누를 때 페이징
         /// 한다면 여기서 해야하나?
         /// 1. 위의 코드의 문제점은 컬러를 그냥 토글만 했을 때는, 이전 페이지 기록이 사라지는 문제가 있음
         /// 2. 만약에 컬러를 버튼을 눌렀고 검색을 시작했을 때, 중간에 색을 바꿨어... 그러면 그러면 다른 색으로 페이지네이션이 될 건데
         /// 2-1 red,1 -> red,2 -> green 1 이 되서 총 90장이 보일 것임
-        ///
+        /// 비슷한 앱들을 참고해서 페이지 어떻게 요청하는지 보자 나이키, 무신사, 크림, 29, 유니클로, 자라
     }
 }
