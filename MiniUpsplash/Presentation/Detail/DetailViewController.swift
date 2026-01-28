@@ -24,10 +24,7 @@ final class DetailViewController: UIViewController {
         return result
     }()
 
-    private let contentView = {
-        let result = UIView()
-        return result
-    }()
+    private let contentView = UIView()
 
     // User
     private let profileImageView = {
@@ -60,7 +57,7 @@ final class DetailViewController: UIViewController {
         result.contentMode = .scaleAspectFit
         result.image = UIImage(systemName: "star.fill")
         result.clipsToBounds = true
-        result.backgroundColor = .orange
+        result.backgroundColor = .clear
         return result
     }()
 
@@ -238,6 +235,7 @@ extension DetailViewController: BasicViewProtocol {
     }
 
     func configureView() {
+        self.hidesBottomBarWhenPushed = true
         navigationController?.navigationBar.prefersLargeTitles = false
 
         profileImageView.kf.setImage(
@@ -245,7 +243,7 @@ extension DetailViewController: BasicViewProtocol {
         )
 
         userNameLabel.text = imageDetail.user.username
-        createdAtLabel.text = imageDetail.createdAt
+        createdAtLabel.text = (DateManager.shared.convert(origin: imageDetail.createdAt) ?? imageDetail.createdAt) + " 게시됨"
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.setupPosterImageView()
