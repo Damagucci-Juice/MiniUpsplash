@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 import Alamofire
 import SnapKit
@@ -16,6 +17,7 @@ final class DetailViewController: UIViewController {
 
     // 데이터소스
     private let imageDetail: ImageDetail
+    private var chartData: StaticResponseDTO?
 
     // 스크롤배경
     private let scrollView = {
@@ -94,12 +96,29 @@ final class DetailViewController: UIViewController {
         label.setBody()
     }
 
-    // TODO: - 차트 영역
-    private let tempChartView = {
-        let result = UIView()
-        result.backgroundColor = .cyan
-        return result
-    }()
+    // Charts
+    private let chartLabel = UILabel().then { label in
+        label.setHeader()
+        label.text = "차트"
+    }
+
+    private lazy var chartTypeSegmentedControl = UISegmentedControl(items: ["조회", "다운로드"]).then { control in
+        control.addTarget(self, action: #selector(didChangedSegmentValue), for: .valueChanged)
+    }
+
+    private var hostingController: UIHostingController<ChartView>?
+
+    @objc
+    private func didChangedSegmentValue(_ sender: UISegmentedControl) {
+        guard let hostingController,
+              let chartData else { return }
+
+        let data: [ValueInfo] = sender.selectedSegmentIndex == 0 ?
+        chartData.views.historical.values :
+        chartData.downloads.historical.values
+
+        hostingController.rootView = ChartView(historical: data)
+    }
 
     @objc private func heartButtonTapped() {
         print(#function)
@@ -152,7 +171,10 @@ extension DetailViewController: BasicViewProtocol {
         }
 
         // chart
-        contentView.addSubview(tempChartView)
+        guard let hostingController else  { return }
+        [chartLabel, chartTypeSegmentedControl, hostingController.view].forEach {
+            contentView.addSubview($0)
+        }
     }
 
     func configureLayout() {
@@ -233,11 +255,25 @@ extension DetailViewController: BasicViewProtocol {
         }
 
         // TODO: - 차트 나중에 바꿔야함
-        tempChartView.snp.makeConstraints { make in
+        guard let hostingController else  { return }
+        chartLabel.snp.makeConstraints { make in
+            make.leading.equalTo(infoLabel)
+            make.top.equalTo(downloadHeaderLabel.snp.bottom).offset(32)
+        }
+
+        chartTypeSegmentedControl.snp.makeConstraints { make in
+            make.trailing.equalTo(downloadBodyLabel)
+            make.centerY.equalTo(chartLabel)
+        }
+
+        hostingController.view.snp.makeConstraints { make in
             make.top.equalTo(downloadHeaderLabel.snp.bottom).offset(100)
-            make.bottom.horizontalEdges.equalToSuperview()
+            make.bottom.horizontalEdges.equalToSuperview().inset(16)
             make.height.equalTo(300)
         }
+
+        // 기본값: 조회탭
+        chartTypeSegmentedControl.selectedSegmentIndex = 0
     }
 
     func configureView() {
@@ -274,7 +310,9 @@ extension DetailViewController: BasicViewProtocol {
 
     private func fetchStatistics(id: String) async {
         if let result = try? await APIService.shared.getStatistic(id).get() {
+            self.chartData = result
             setupInfoValue(result)
+            initChart(result)
         }
     }
 
@@ -282,5 +320,10 @@ extension DetailViewController: BasicViewProtocol {
         sizeBodyLabel.text = "\(imageDetail.width) x \(imageDetail.height)"
         seenBodyLabel.text = NumberManager.shared.convert(dto.views.total)
         downloadBodyLabel.text = NumberManager.shared.convert(dto.downloads.total)
+    }
+
+    private func initChart(_ dto: StaticResponseDTO) {
+        let chartView = ChartView(historical: dto.views.historical.values)
+        self.hostingController = UIHostingController(rootView: chartView)
     }
 }

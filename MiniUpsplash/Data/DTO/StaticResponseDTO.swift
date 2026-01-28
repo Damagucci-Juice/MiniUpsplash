@@ -25,7 +25,8 @@ struct Historical: Decodable {
     let values: [ValueInfo]
 }
 
-struct ValueInfo: Decodable {
+struct ValueInfo: Decodable, Identifiable {
+    let id = UUID()
     let date: String
     let value: Int
 }
