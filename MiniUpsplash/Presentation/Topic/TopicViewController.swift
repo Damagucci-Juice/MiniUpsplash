@@ -47,17 +47,17 @@ final class TopicViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
         Task {
             do {
-                let result = try await service.getTopic(.init(page: nil, kind: .goldenHour)).get()
-                let result2 = try await service.getTopic(.init(page: nil, kind: .businessWork)).get()
-                let result3 = try await service.getTopic(.init(page: nil, kind: .architectureInterior)).get()
-                
-                dataSource[0].append(contentsOf: result)
-                dataSource[1].append(contentsOf: result2)
-                dataSource[2].append(contentsOf: result3)
-                
+                async let result  = service.getTopic(.init(page: nil, kind: .goldenHour)).get()
+                async let result2 = service.getTopic(.init(page: nil, kind: .businessWork)).get()
+                async let result3 = service.getTopic(.init(page: nil, kind: .architectureInterior)).get()
+
+                let response = try await [result, result2, result3]
+                dataSource[0] = response[0]
+                dataSource[1] = response[1]
+                dataSource[2] = response[2]
+
                 firstCollectionView.reloadData()
                 secondCollectionView.reloadData()
                 thirdCollectionView.reloadData()
