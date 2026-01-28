@@ -13,6 +13,9 @@ final class TopicViewController: UIViewController {
 
     private let service: APIProtocol
 
+    private let scrollView = UIScrollView()
+    private let contentView = UIView()
+
     private let firstLabel: UILabel = {
         let label = UILabel()
         label.setSectionHeader()
@@ -117,24 +120,36 @@ extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSou
 
 extension TopicViewController: BasicViewProtocol {
     func configureHierarchy() {
-        view.addSubview(firstLabel)
-        view.addSubview(firstCollectionView)
+        view.addSubview(scrollView)
+        scrollView.addSubview(contentView)
 
-        view.addSubview(secondLabel)
-        view.addSubview(secondCollectionView)
+        contentView.addSubview(firstLabel)
+        contentView.addSubview(firstCollectionView)
 
-        view.addSubview(thirdLabel)
-        view.addSubview(thirdCollectionView)
+        contentView.addSubview(secondLabel)
+        contentView.addSubview(secondCollectionView)
+
+        contentView.addSubview(thirdLabel)
+        contentView.addSubview(thirdCollectionView)
     }
 
     func configureLayout() {
+        scrollView.snp.makeConstraints { make in
+            make.edges.equalTo(view.safeAreaLayoutGuide)
+        }
+
+        contentView.snp.makeConstraints { make in
+            make.edges.equalTo(scrollView.contentLayoutGuide)
+            make.width.equalTo(scrollView.frameLayoutGuide)
+        }
+
         firstLabel.snp.makeConstraints { make in
-            make.leading.top.equalTo(view.safeAreaLayoutGuide).offset(16)
+            make.horizontalEdges.top.equalTo(contentView).inset(16)
         }
 
         firstCollectionView.snp.makeConstraints { make in
             make.top.equalTo(firstLabel.snp.bottom).offset(16)
-            make.horizontalEdges.equalToSuperview()
+            make.horizontalEdges.equalTo(contentView)
             make.height.equalTo(LayoutConstant.topicCollectionViewCellHeight)
         }
 
@@ -145,7 +160,7 @@ extension TopicViewController: BasicViewProtocol {
 
         secondCollectionView.snp.makeConstraints { make in
             make.top.equalTo(secondLabel.snp.bottom).offset(16)
-            make.horizontalEdges.equalToSuperview()
+            make.horizontalEdges.equalTo(contentView)
             make.height.equalTo(LayoutConstant.topicCollectionViewCellHeight)
         }
 
@@ -156,13 +171,17 @@ extension TopicViewController: BasicViewProtocol {
 
         thirdCollectionView.snp.makeConstraints { make in
             make.top.equalTo(thirdLabel.snp.bottom).offset(16)
-            make.horizontalEdges.equalToSuperview()
+            make.horizontalEdges.bottom.equalTo(contentView)
             make.height.equalTo(LayoutConstant.topicCollectionViewCellHeight)
         }
 
     }
 
     func configureView() {
+        scrollView.backgroundColor = .red
+        contentView.backgroundColor = .lightGray
+        scrollView.showsVerticalScrollIndicator = false
+
         configureCollectionSection(label: firstLabel, collectionView: firstCollectionView, subject: .goldenHour)
         configureCollectionSection(label: secondLabel, collectionView: secondCollectionView, subject: .businessWork)
         configureCollectionSection(label: thirdLabel, collectionView: thirdCollectionView, subject: .architectureInterior)
