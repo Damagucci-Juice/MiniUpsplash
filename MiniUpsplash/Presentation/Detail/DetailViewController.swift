@@ -273,7 +273,7 @@ extension DetailViewController: BasicViewProtocol {
         }
 
         hostingController.view.snp.makeConstraints { make in
-            make.top.equalTo(chartLabel.snp.bottom).offset(32)
+            make.top.equalTo(chartLabel.snp.bottom).offset(128)
             make.bottom.horizontalEdges.equalToSuperview().inset(16)
             make.height.equalTo(300)
         }
