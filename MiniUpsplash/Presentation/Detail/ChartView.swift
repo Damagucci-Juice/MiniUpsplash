@@ -1,73 +1,111 @@
-//
-//  ChartView.swift
-//  MiniUpsplash
-//
-//  Created by Gucci on 1/29/26.
-//
+////
+////  ChartView.swift
+////  MiniUpsplash
+////
+////  Created by Gucci on 1/29/26.
+////
 
 import SwiftUI
 import Charts
+
+struct TrendAnnotationView: View {
+    let values: [ValueInfo]
+    let date: String
+    let valueData: Int
+
+    func foo() {
+        var foo: [Int] = [0,0]
+        foo.removeLast()
+    }
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text(date)
+                .font(.headline)
+            Divider()
+            ForEach(values, id: \.self.id) { origin in
+                Text(NumberManager.shared.convert(origin.value))
+            }
+        }
+        .padding()
+        .background(Color.annotationBackground)
+    }
+}
+
+
 
 struct ChartView: View {
     @State private var selectedDate: String?
     let historical: [ValueInfo]
 
     var body: some View {
-        Chart(historical) { value in
-            AreaMark(
-                x: .value("Day", value.date),
-                y: .value("Value", value.value)
-            )
-            .foregroundStyle(
-                LinearGradient(
-                    gradient: Gradient(colors: [.blue, .white]),
-                    startPoint: .top,
-                    endPoint: .bottom
+        Chart {
+            ForEach(historical) { value in
+                AreaMark(
+                    x: .value("Day", value.date),
+                    y: .value("Value", value.value)
                 )
-            )
+                .interpolationMethod(.catmullRom) // 곡선을 더 부드럽게
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.blue.opacity(0.5), .blue.opacity(0.0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
 
-            if let selectedDate,
-               let value = historical.first(where: { value in
-                    value.date == selectedDate
-                })
-            {
-                RectangleMark(x: .value("Day", selectedDate))
-                    .foregroundStyle(.primary.opacity(0.2))
-                    .annotation(
-                        position: .leading,
-                        alignment: .center, spacing: 0
-                    ) {
-                        TrendAnnotationView(values: historical, date: selectedDate, valueData: value.value)
+            if let selectedDate {
+                RuleMark(x: .value("Selected", selectedDate))
+                    .foregroundStyle(.blue)
+                    .lineStyle(StrokeStyle(lineWidth: 2, dash: [5])) // 점선으로 세련되게
+                    .annotation(position: .automatic, alignment: .center) {
+                        // 현재 날짜의 데이터만 전달하도록 필터링 추천
+                        TrendAnnotationView(values: historical.filter { $0.date == selectedDate },
+                                            date: selectedDate,
+                                            valueData: 0)
                     }
-                    .accessibilityHidden(true)
             }
         }
         .chartXAxis(.hidden)
         .chartYAxis(.hidden)
-        .chartOverlay { (chartProxy: ChartProxy) in
+        .chartOverlay { proxy in
             GeometryReader { geometry in
                 Rectangle()
                     .fill(Color.clear)
-                    .contentShape(Rectangle()) // 터치 영역 확보
-                    .gesture(
-                        DragGesture(minimumDistance: 0) // 터치 시작부터 감지
-                            .onChanged { value in
-                                let origin = geometry[chartProxy.plotAreaFrame].origin
-                                let location = CGPoint(
-                                    x: value.location.x - origin.x,
-                                    y: value.location.y - origin.y
-                                )
-                                // x축 위치에 해당하는 날짜 값 추출
-                                if let date: String = chartProxy.value(atX: location.x) {
-                                    selectedDate = date
-                                }
-                            }
-                            .onEnded { _ in
-                                selectedDate = nil // 손을 떼면 어노테이션 제거
-                            }
-                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture { location in
+                        updateSelectedDate(at: location, proxy: proxy)
+                    }
             }
         }
+    }
+
+    private func updateSelectedDate(at location: CGPoint, proxy: ChartProxy) {
+        // 탭한 위치에서 가장 가까운 x축 값을 찾음
+        guard let date: String = proxy.value(atX: location.x) else { return }
+
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            if selectedDate == date {
+                selectedDate = nil
+            } else {
+                selectedDate = date
+                // 햅틱 피드백 추가 (iOS 전용)
+                #if os(iOS)
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                #endif
+            }
+        }
+    }
+}
+
+
+extension Color {
+    static var annotationBackground: Color {
+#if os(macOS)
+        return Color(nsColor: .controlBackgroundColor)
+#else
+        return Color(uiColor: .secondarySystemBackground)
+#endif
     }
 }
 
@@ -80,34 +118,4 @@ struct ChartView: View {
     ]
 
     ChartView(historical: mockData)
-}
-
-
-struct TrendAnnotationView: View {
-    let values: [ValueInfo]
-    let date: String
-    let valueData: Int
-
-    var body: some View {
-        VStack(alignment: .leading) {
-            Text(date)
-                .font(.headline)
-            Divider()
-            ForEach(values, id: \.self.id) { origin in
-                Text("\(origin.date): \(NumberManager.shared.convert(origin.value))")
-            }
-        }
-        .padding()
-        .background(Color.annotationBackground)
-    }
-}
-
-extension Color {
-    static var annotationBackground: Color {
-        #if os(macOS)
-        return Color(nsColor: .controlBackgroundColor)
-        #else
-        return Color(uiColor: .secondarySystemBackground)
-        #endif
-    }
 }

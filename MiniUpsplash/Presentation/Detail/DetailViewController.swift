@@ -211,9 +211,15 @@ extension DetailViewController: BasicViewProtocol {
         }
 
         // main image
+        let screenWidth = UIScreen.main.bounds.width
+        let aspectRatio = CGFloat(imageDetail.height) / CGFloat(imageDetail.width)
+
+        // 2. 최종 높이 계산: 화면 너비 * 비율
+        let calculatedHeight = screenWidth * aspectRatio
         posterImageView.snp.makeConstraints { make in
             make.top.equalTo(profileImageView.snp.bottom).offset(16)
-            make.horizontalEdges.equalToSuperview()
+            make.horizontalEdges.equalTo(contentView)
+            make.height.equalTo(calculatedHeight)
         }
 
         // data
@@ -295,17 +301,18 @@ extension DetailViewController: BasicViewProtocol {
         let screenImageWidthRatio = CGFloat(imageDetail.width) / screenWidth
         let targetSize = CGSize(width: screenWidth, height: CGFloat(imageDetail.height) / screenImageWidthRatio)
         let processor = DownsamplingImageProcessor(size: targetSize)
-        let placeHolderView = UIImage(named: "posterPlaceHolder")?.imageWith(newSize: targetSize)
 
         posterImageView.kf.setImage(
             with: URL(string: imageDetail.urls.raw),
-            placeholder: placeHolderView,
             options: [
                 .processor(processor),
                 .scaleFactor(optimizedScale),
                 .cacheSerializer(FormatIndicatedCacheSerializer.jpeg),
+                .transition(.fade(0.3))
             ]
         )
+
+        posterImageView.backgroundColor = .lightGray
     }
 
     private func fetchStatistics(id: String) async {
