@@ -18,6 +18,7 @@ final class DetailViewController: UIViewController {
     // 데이터소스
     private let imageDetail: ImageDetail
     private var chartData: StaticResponseDTO?
+    private let service: APIProtocol
 
     // 스크롤배경
     private let scrollView = {
@@ -124,8 +125,9 @@ final class DetailViewController: UIViewController {
         print(#function)
     }
 
-    init(imageDetail: ImageDetail) {
+    init(imageDetail: ImageDetail, service: APIProtocol) {
         self.imageDetail = imageDetail
+        self.service = service
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -277,9 +279,6 @@ extension DetailViewController: BasicViewProtocol {
             make.bottom.horizontalEdges.equalToSuperview().inset(16)
             make.height.equalTo(300)
         }
-
-        // 기본값: 조회탭
-        chartTypeSegmentedControl.selectedSegmentIndex = 0
     }
 
     func configureView() {
@@ -291,6 +290,7 @@ extension DetailViewController: BasicViewProtocol {
 
         userNameLabel.text = imageDetail.user.username
         createdAtLabel.text = (DateManager.shared.convert(origin: imageDetail.createdAt) ?? imageDetail.createdAt) + " 게시됨"
+        chartTypeSegmentedControl.selectedSegmentIndex = 0
     }
 
     private func setupPosterImageView() {
@@ -316,10 +316,14 @@ extension DetailViewController: BasicViewProtocol {
     }
 
     private func fetchStatistics(id: String) async {
-        if let result = try? await APIService.shared.getStatistic(id).get() {
+        do {
+            let result = try await service.getStatistic(id).get()
             self.chartData = result
             setupInfoValue(result)
             initChart(result)
+        } catch {
+            print("id: \(id) 통계 실패")
+            print(error.localizedDescription)
         }
     }
 

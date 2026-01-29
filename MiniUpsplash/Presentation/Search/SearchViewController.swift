@@ -9,6 +9,7 @@ import UIKit
 
 import SnapKit
 import Toast
+import Kingfisher
 
 final class SearchViewController: UIViewController {
 
@@ -107,6 +108,11 @@ final class SearchViewController: UIViewController {
         configureView()
     }
 
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        clearImageCache()
+    }
+
     func imageLayout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -145,6 +151,7 @@ extension SearchViewController: UISearchBarDelegate {
             }
             return
         }
+        clearImageCache()
         resetPage(newKey: searchText.lowercased())
         handleSearchReturn(searchText.lowercased())
     }
@@ -152,6 +159,7 @@ extension SearchViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         resetPage(newKey: nil)
         resetCenterLabel()
+        clearImageCache()
         imageCollectionView.reloadData()
     }
 
@@ -193,6 +201,12 @@ extension SearchViewController: UISearchBarDelegate {
             }
         }
     }
+
+    private func clearImageCache() {
+        KingfisherManager.shared.cache.clearMemoryCache()
+        KingfisherManager.shared.cache.clearDiskCache()
+        KingfisherManager.shared.cache.cleanExpiredDiskCache()
+    }
 }
 
 extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSource {
@@ -217,7 +231,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // cell tapped
         let item = dataSource[indexPath.item]
-        let vc = DetailViewController(imageDetail: item)
+        let vc = DetailViewController(imageDetail: item, service: service)
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

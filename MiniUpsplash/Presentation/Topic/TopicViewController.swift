@@ -119,7 +119,7 @@ extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSou
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         // cell tapped
         let item = dataSource[collectionView.tag][indexPath.row]
-        let vc = DetailViewController(imageDetail: item)
+        let vc = DetailViewController(imageDetail: item, service: service)
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

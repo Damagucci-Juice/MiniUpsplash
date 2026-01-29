@@ -38,9 +38,9 @@ final class MockAPIService: APIProtocol {
     }
 
     func getStatistic(_ imageId: String) async throws -> Result<StaticResponseDTO, any Error> {
-        let urlStr = "https://mock-0527eea38e7d41a490d2347a55302361.mock.insomnia.run/photos/QvIEolyJAIQ/statistics"
+        let url = "https://mock-0527eea38e7d41a490d2347a55302361.mock.insomnia.run/photos/QvIEolyJAIQ/statistics"
 
-        let result = try await AF.request(urlStr)
+        let result = try await AF.request(url)
             .validate()
             .serializingDecodable(StaticResponseDTO.self)
             .value
