@@ -9,6 +9,7 @@ import UIKit
 
 import SnapKit
 import Toast
+import Then
 
 final class TopicViewController: UIViewController {
 
@@ -17,6 +18,10 @@ final class TopicViewController: UIViewController {
     private var randomTopics = [TopicSubject]()
     private var dataSource = [[ImageDetail]]()
     private let tableView = UITableView()
+    private lazy var refreshControl = UIRefreshControl().then { rct in
+        rct.addTarget(self, action: #selector(refreshTopics), for: .valueChanged)
+        tableView.refreshControl = rct
+    }
 
     // MARK: - init
     init(service: APIProtocol) {
@@ -32,19 +37,19 @@ final class TopicViewController: UIViewController {
         configureHierarchy()
         configureLayout()
         configureView()
-        refreshTopics()
+        refreshTopics(refreshControl)
     }
 
     private func fetchTopics(_ topics: [TopicSubject]) async {
-        var result = [[ImageDetail]]()
+        var result = [(Int, [ImageDetail])]()
         let group = DispatchGroup()
-        for topic in topics {
+        for (index, topic) in topics.enumerated() {
             group.enter()
             service.getTopic(.init(page: nil, kind: topic)) { response in
 
                 switch response {
                 case .success(let success):
-                    result.append(success)
+                    result.append((index, success))
                 case .failure(let failure):
                     self.view.makeToast("""
                             에러코드: \(failure.localizedDescription)
@@ -58,14 +63,18 @@ final class TopicViewController: UIViewController {
 
         group.notify(queue: .main) {
             self.dataSource = result
+                .sorted { $0.0 < $1.0 }
+                .map { $0.1 }
             self.tableView.reloadData()
         }
     }
 
-    private func refreshTopics() {
+    @objc
+    private func refreshTopics(_ sender: UIRefreshControl) {
         randomTopics = TopicSubject.randomElement(for: 3)
         Task {
             await fetchTopics(randomTopics)
+            sender.endRefreshing()
         }
     }
 
