@@ -9,9 +9,10 @@ import UIKit
 
 import SnapKit
 import Toast
+import Then
 import Kingfisher
 
-final class SearchViewController: UIViewController {
+final class SearchResultViewController: UIViewController {
 
     private let searchBarController = UISearchController(searchResultsController: nil)
 
@@ -38,6 +39,11 @@ final class SearchViewController: UIViewController {
         label.textAlignment = .left
         return label
     }()
+
+    private let totalCountLabel = UILabel().then { label in
+        label.setBody()
+        label.text = "20개"
+    }
 
     private var dataSource: [ImageDetail] = []
 
@@ -101,6 +107,7 @@ final class SearchViewController: UIViewController {
         page = 1
         isEnd = false
         dataSource.removeAll()
+        totalCountLabel.isHidden = true
     }
 
     private var currentSearchKey: String?
@@ -158,7 +165,7 @@ final class SearchViewController: UIViewController {
     }
 }
 
-extension SearchViewController: UISearchBarDelegate {
+extension SearchResultViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         guard let validatedText = validateText(searchBar.text) else {
             view.makeToast("2글자 이상 입력해주세요")
@@ -215,20 +222,22 @@ extension SearchViewController: UISearchBarDelegate {
                 // 첫 페이지에서 결과가 비었을 때,
                 centerLabel.text = Constant.emptyResult
                 centerLabel.isHidden = false
-                self.imageCollectionView.reloadData()
+                imageCollectionView.reloadData()
             } else {
                 centerLabel.isHidden = true
             }
 
             // 마지막 페이지 처리
             self.isEnd = response.total_pages < self.page
-            guard !self.isEnd else { return }
+            guard !isEnd else { return }
 
             // 결과에 어펜드하고 화면 다시 그리기 후 첫 페이지라면 상단으로 이동
-            self.dataSource.append(contentsOf: response.results)
-            self.imageCollectionView.reloadData()
+            dataSource.append(contentsOf: response.results)
+            imageCollectionView.reloadData()
             if page == 1, !dataSource.isEmpty {
-                self.scrollToTop()
+                totalCountLabel.isHidden = false
+                totalCountLabel.text = "\(response.total)개"
+                scrollToTop()
             }
         }
     }
@@ -240,7 +249,7 @@ extension SearchViewController: UISearchBarDelegate {
     }
 }
 
-extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension SearchResultViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         dataSource.count
     }
@@ -268,7 +277,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
     }
 }
 
-extension SearchViewController: BasicViewProtocol {
+extension SearchResultViewController: BasicViewProtocol {
     func configureHierarchy() {
         view.addSubview(colorScrollView)
         colorScrollView.addSubview(colorStackView)
@@ -318,6 +327,7 @@ extension SearchViewController: BasicViewProtocol {
                                      forCellWithReuseIdentifier: SearchCollectionViewCell.identifier)
         imageCollectionView.delegate = self
         imageCollectionView.dataSource = self
+        totalCountLabel.isHidden = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self else { return }
             self.imageCollectionView.collectionViewLayout = self.imageLayout()
@@ -335,6 +345,8 @@ extension SearchViewController: BasicViewProtocol {
 
     private func configureColorViews() {
         colorScrollView.showsHorizontalScrollIndicator = false
+
+        colorStackView.addArrangedSubview(totalCountLabel)
 
         // TODO: - Color Select
         ColorParam.allCases.forEach { param in
