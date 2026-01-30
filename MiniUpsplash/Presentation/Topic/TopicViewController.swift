@@ -10,12 +10,16 @@ import UIKit
 import SnapKit
 
 final class TopicViewController: UIViewController {
-    
+
+    // Data
     private let service: APIProtocol
-    
     private let scrollView = UIScrollView()
     private let contentView = UIView()
-    
+    private var randomTopics = [TopicSubject]()
+    private var dataSource = [[ImageDetail]]()
+
+
+    // UI
     private let firstLabel: UILabel = {
         let label = UILabel()
         label.setSectionHeader()
@@ -34,19 +38,18 @@ final class TopicViewController: UIViewController {
         return label
     }()
 
-    private var randomTopics = [TopicSubject]()
-
     private lazy var firstCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     private lazy var secondCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     private lazy var thirdCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
-    
-    private var dataSource = [[ImageDetail]]()
 
+    // init
     init(service: APIProtocol) {
         self.service = service
         super.init(nibName: nil, bundle: nil)
     }
-    
+
+
+    // life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -116,6 +119,7 @@ final class TopicViewController: UIViewController {
     }
 }
 
+// MARK: - UICollectionViewDelegate, UICollectionViewDataSource
 extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         dataSource.isEmpty ? 0 : dataSource[collectionView.tag].count
@@ -138,6 +142,7 @@ extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSou
     }
 }
 
+// MARK: - BasicViewProtocol
 extension TopicViewController: BasicViewProtocol {
     func configureHierarchy() {
         view.addSubview(scrollView)
