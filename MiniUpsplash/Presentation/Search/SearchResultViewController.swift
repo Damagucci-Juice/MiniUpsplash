@@ -188,10 +188,6 @@ extension SearchResultViewController: UISearchBarDelegate {
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         guard let validatedText = validateText(searchBar.text) else {
-//            view.makeToast("2글자 이상 입력해주세요")
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-//                searchBar.becomeFirstResponder()
-//            }
             return
         }
         clearImageCache()

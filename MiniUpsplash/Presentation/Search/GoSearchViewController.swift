@@ -7,8 +7,9 @@
 
 import UIKit
 
-import Toast
 import Alamofire
+import Toast
+import SnapKit
 
 final class GoSearchViewController: UIViewController {
 
@@ -16,6 +17,24 @@ final class GoSearchViewController: UIViewController {
 
     var onTextFilled: ((String) -> Void)?
     var onCloseButtonTapped: (() -> Void)?
+
+    private lazy var recentTableView = {
+        let result = UITableView()
+        result.delegate = self
+        result.dataSource = self
+        result.backgroundColor = .white
+        result.register(RecentKeywordTableViewCell.self,
+                        forCellReuseIdentifier: RecentKeywordTableViewCell.identifier)
+        result.rowHeight = UITableView.automaticDimension
+        result.separatorStyle = .none
+        return result
+    }()
+
+
+    private var datasource: [String] {
+        get { UDManager.searchKeys }
+        set { UDManager.searchKeys = newValue }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,7 +77,7 @@ extension GoSearchViewController: UISearchBarDelegate {
             }
             return
         }
-
+        datasource.insert(searchBar.text!, at: 0)
         onTextFilled?(validated)
         navigationController?.popViewController(animated: true)
     }
@@ -75,13 +94,42 @@ extension GoSearchViewController: UISearchBarDelegate {
     }
 }
 
+extension GoSearchViewController: UITableViewDelegate, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        datasource.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: RecentKeywordTableViewCell.identifier, for: indexPath) as? RecentKeywordTableViewCell else { return UITableViewCell() }
+
+        cell.configure(datasource[indexPath.item])
+        cell.removeButton.addTarget(self, action: #selector(handleCellRemoveButtonTapped), for: .touchUpInside)
+        cell.removeButton.tag = indexPath.item
+
+        return cell
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        searchBarController.searchBar.text = datasource[indexPath.row]
+        searchBarSearchButtonClicked(searchBarController.searchBar)
+    }
+
+    @objc
+    private func handleCellRemoveButtonTapped(_ sender: UIButton) {
+        datasource.remove(at: sender.tag)
+        recentTableView.reloadData()
+    }
+}
+
 extension GoSearchViewController: BasicViewProtocol {
     func configureHierarchy() {
-        print(#function)
+        view.addSubview(recentTableView)
     }
 
     func configureLayout() {
-        print(#function)
+        recentTableView.snp.makeConstraints { make in
+            make.edges.equalTo(view.safeAreaLayoutGuide)
+        }
     }
 
     func configureView() {
