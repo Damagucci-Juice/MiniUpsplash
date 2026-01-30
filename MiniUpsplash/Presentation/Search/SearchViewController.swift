@@ -59,10 +59,28 @@ final class SearchViewController: UIViewController {
     }()
 
     @objc private func orderButtonTapped() {
-        orderBy = orderBy == .relevant ? .latest : .relevant
         sortButton.setTitle(orderBy.text, for: .normal)
-        // TODO: - 컬러와 마찬가지로 선택 값이 바뀔 때 페이지네이션 어떻게 할지 충분한 고민이 필요해 보임...
-        /// 어떻게 해야 말이 되는 Pagination을 구현할 수 있을까 ?
+
+        orderBy = orderBy == .relevant ? .latest : .relevant
+        validateSearch()
+    }
+
+    private func validateSearch() {
+        guard let validatedText = validateText(searchBarController.searchBar.text) else { return }
+        clearImageCache()
+        resetPage(newKey: validatedText)
+        Task {
+            await requestSearch(makeRequestDto(validatedText, page: page, color: selectedColor, sort: orderBy))
+        }
+    }
+
+    private func makeRequestDto(_ query: String, page: Int, color: ColorParam?, sort: OrderBy?) -> SearchRequestDTO {
+        SearchRequestDTO(
+           query: query,
+           page: page,
+           perPage: countPerPage,
+           orderBy: sort,
+           color: color)
     }
 
     private var orderBy = OrderBy.relevant
@@ -142,9 +160,7 @@ final class SearchViewController: UIViewController {
 
 extension SearchViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        guard let searchText = searchBar.text,
-              !searchText.isEmpty,
-              searchText.replacingOccurrences(of: " ", with: "").count > 1 else {
+        guard let validatedText = validateText(searchBar.text) else {
             view.makeToast("2글자 이상 입력해주세요")
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 searchBar.becomeFirstResponder()
@@ -152,8 +168,19 @@ extension SearchViewController: UISearchBarDelegate {
             return
         }
         clearImageCache()
-        resetPage(newKey: searchText.lowercased())
-        handleSearchReturn(searchText.lowercased())
+        resetPage(newKey: validatedText)
+        handleSearchReturn(validatedText)
+    }
+
+    // nil 값이면 벨리데이트 실패, 값이 있다면 제대로 리턴 된 것임
+    private func validateText(_ text: String?) -> String? {
+        guard let searchText = text,
+              !searchText.isEmpty else { return nil }
+
+        let withoutSpacing = searchText.replacingOccurrences(of: " ", with: "")
+        if withoutSpacing.count < 2 { return nil }
+
+        return withoutSpacing.lowercased()
     }
 
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
@@ -169,35 +196,42 @@ extension SearchViewController: UISearchBarDelegate {
     }
 
     private func handleSearchReturn(_ text: String) {
-        let requestDto = SearchRequestDTO(
-            query: text,
-            page: page,
-            perPage: countPerPage,
-            orderBy: orderBy,
-            color: selectedColor)
-
-        Task { @MainActor [weak self] in
+        Task { [weak self] in
             guard let self else { return }
-            do {
-                let successResponse = try await service.getSearch(requestDto).get()
-                if successResponse.results.isEmpty, self.page == 1 {
-                    centerLabel.text = Constant.emptyResult
-                    centerLabel.isHidden = false
-                    self.imageCollectionView.reloadData()
-                } else {
-                    centerLabel.isHidden = true
-                }
+            await self.requestSearch(makeRequestDto(text, page: self.page, color: self.selectedColor, sort: self.orderBy))
+        }
+    }
 
-                self.isEnd = successResponse.total_pages < self.page
-                guard !self.isEnd else { return }
+    private func requestSearch(_ dto: SearchRequestDTO) async {
+        do {
+            let successResponse = try await service.getSearch(dto).get()
+            handleSuccess(successResponse)
+        } catch {
+            debugPrint(error.localizedDescription)
+        }
 
-                self.dataSource.append(contentsOf: successResponse.results)
+        func handleSuccess(_ response: SearchResponseDTO) {
+            if response.results.isEmpty, self.page == 1 {
+                // 첫 페이지에서 결과가 비었을 때,
+                centerLabel.text = Constant.emptyResult
+                centerLabel.isHidden = false
+                self.imageCollectionView.reloadData()
+            } else {
+                centerLabel.isHidden = true
+            }
+
+            // 마지막 페이지 처리
+            self.isEnd = response.total_pages < self.page
+            guard !self.isEnd else { return }
+
+            // 결과에 어펜드하고 화면 다시 그리기 후 첫 페이지라면 상단으로 이동
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.dataSource.append(contentsOf: response.results)
                 self.imageCollectionView.reloadData()
                 if page == 1, !dataSource.isEmpty {
                     self.scrollToTop()
                 }
-            } catch {
-                debugPrint(error.localizedDescription)
             }
         }
     }
@@ -314,31 +348,15 @@ extension SearchViewController: BasicViewProtocol {
         }
     }
 
-    private func handleColorButtonTapped(_ color: ColorParam) {
+    private func handleColorButtonTapped(_ color: ColorParam?) {
         colorStackView.arrangedSubviews.forEach { view in
             guard let colorButton = view as? ColorFilterButton else { return }
             if colorButton.colorParam != color {
                 colorButton.isSelected = false
             }
         }
+        selectedColor = color
 
-        if selectedColor == nil {
-            page = 1
-            selectedColor = color
-        } else if selectedColor != nil {
-            if selectedColor == color { //
-                selectedColor = nil
-            } else {
-                selectedColor = color
-            }
-            page = 1
-        }
-
-        // TODO: - Page 전환은 어떻게 할건가? 이미 사진 리스트가 화면에 보인 상태에서 컬러나, 정렬 버튼을 누를 때 페이징
-        /// 한다면 여기서 해야하나?
-        /// 1. 위의 코드의 문제점은 컬러를 그냥 토글만 했을 때는, 이전 페이지 기록이 사라지는 문제가 있음
-        /// 2. 만약에 컬러를 버튼을 눌렀고 검색을 시작했을 때, 중간에 색을 바꿨어... 그러면 그러면 다른 색으로 페이지네이션이 될 건데
-        /// 2-1 red,1 -> red,2 -> green 1 이 되서 총 90장이 보일 것임
-        /// 비슷한 앱들을 참고해서 페이지 어떻게 요청하는지 보자 나이키, 무신사, 크림, 29, 유니클로, 자라
+        validateSearch()
     }
 }
