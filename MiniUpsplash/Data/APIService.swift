@@ -50,6 +50,22 @@ final class APIService: APIProtocol {
         return .success(result)
     }
 
+    func getTopic(_ dto: TopicRequestDTO, _ completion: @escaping (Result<[ImageDetail], any Error>) -> Void) {
+        let urlStr = Constant.baseUrl + "/topics" + dto.kind.queryPath + "/photos"
+        let param = dto.makeParam()
+
+        AF.request(urlStr,
+                   method: .get,
+                   parameters: param,
+                   headers: header)
+        .validate()
+        .responseDecodable(of: [ImageDetail].self) { response in
+            completion(response.result.mapError({ afError in
+                APIError.default(message: afError.localizedDescription)
+            }))
+        }
+    }
+
     func getStatistic(_ imageId: String) async throws -> Result<StaticResponseDTO, any Error> {
         let url = Constant.baseUrl + "/photos" + "/" + imageId + "/statistics"
 
@@ -63,4 +79,8 @@ final class APIService: APIProtocol {
         return .success(result)
     }
 
+}
+
+enum APIError: Error {
+    case `default`(message: String)
 }

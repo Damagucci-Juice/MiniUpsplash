@@ -37,6 +37,18 @@ final class MockAPIService: APIProtocol {
         return .success(result)
     }
 
+    func getTopic(_ topicRequestDto: TopicRequestDTO, _ completion: @escaping (Result<[ImageDetail], any Error>) -> Void) {
+        let urlStr = "https://mock-0527eea38e7d41a490d2347a55302361.mock.insomnia.run/topics/architecture-interior/photos"
+
+        AF.request(urlStr)
+        .validate()
+        .responseDecodable(of: [ImageDetail].self) { response in
+            completion(response.result.mapError({ afError in
+                APIError.default(message: afError.localizedDescription)
+            }))
+        }
+    }
+
     func getStatistic(_ imageId: String) async throws -> Result<StaticResponseDTO, any Error> {
         let url = "https://mock-0527eea38e7d41a490d2347a55302361.mock.insomnia.run/photos/QvIEolyJAIQ/statistics"
 
