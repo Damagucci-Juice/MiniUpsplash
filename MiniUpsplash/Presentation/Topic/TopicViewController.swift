@@ -33,13 +33,15 @@ final class TopicViewController: UIViewController {
         label.setSectionHeader()
         return label
     }()
-    
+
+    private var randomTopics = [TopicSubject]()
+
     private lazy var firstCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     private lazy var secondCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     private lazy var thirdCollectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewLayout())
     
-    private var dataSource: [[ImageDetail]] = Array(repeating: [], count: 3)
-    
+    private var dataSource = [[ImageDetail]]()
+
     init(service: APIProtocol) {
         self.service = service
         super.init(nibName: nil, bundle: nil)
@@ -47,30 +49,41 @@ final class TopicViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        Task {
-            do {
-                async let result  = service.getTopic(.init(page: nil, kind: .goldenHour)).get()
-                async let result2 = service.getTopic(.init(page: nil, kind: .businessWork)).get()
-                async let result3 = service.getTopic(.init(page: nil, kind: .architectureInterior)).get()
 
-                let response = try await [result, result2, result3]
-                dataSource[0] = response[0]
-                dataSource[1] = response[1]
-                dataSource[2] = response[2]
-
-                firstCollectionView.reloadData()
-                secondCollectionView.reloadData()
-                thirdCollectionView.reloadData()
-            } catch {
-                debugPrint(error.localizedDescription)
-            }
-        }
-        
         configureHierarchy()
         configureLayout()
         configureView()
     }
-    
+
+    private func fetchTopics() async throws -> [[ImageDetail]] {
+        do {
+            // TODO: - 만약에 랜덤 20개를 해달라고 하면 20줄 추가할꺼야? 어떻게 할래?
+            async let result  = service.getTopic(.init(page: nil, kind: randomTopics[0])).get()
+            async let result2 = service.getTopic(.init(page: nil, kind: randomTopics[1])).get()
+            async let result3 = service.getTopic(.init(page: nil, kind: randomTopics[2])).get()
+
+            return try await [result, result2, result3]
+        } catch {
+            throw error
+        }
+    }
+
+    private func tableviewsReload() {
+        firstCollectionView.reloadData()
+        secondCollectionView.reloadData()
+        thirdCollectionView.reloadData()
+    }
+
+    private func refreshTopics() {
+        randomTopics = TopicSubject.randomElement(for: 3)
+        Task {
+            if let datasource = try? await fetchTopics() {
+                self.dataSource = datasource
+                tableviewsReload()
+            }
+        }
+    }
+
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -105,7 +118,7 @@ final class TopicViewController: UIViewController {
 
 extension TopicViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        dataSource[collectionView.tag].count
+        dataSource.isEmpty ? 0 : dataSource[collectionView.tag].count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
@@ -185,6 +198,7 @@ extension TopicViewController: BasicViewProtocol {
     }
     
     func configureView() {
+        refreshTopics()
         scrollView.showsVerticalScrollIndicator = false
         scrollView.delegate = self
         view.backgroundColor = .white
@@ -192,9 +206,10 @@ extension TopicViewController: BasicViewProtocol {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
 
-        configureCollectionSection(label: firstLabel, collectionView: firstCollectionView, subject: .goldenHour)
-        configureCollectionSection(label: secondLabel, collectionView: secondCollectionView, subject: .businessWork)
-        configureCollectionSection(label: thirdLabel, collectionView: thirdCollectionView, subject: .architectureInterior)
+        guard !randomTopics.isEmpty else { return }
+        configureCollectionSection(label: firstLabel, collectionView: firstCollectionView, subject: randomTopics[0])
+        configureCollectionSection(label: secondLabel, collectionView: secondCollectionView, subject: randomTopics[1])
+        configureCollectionSection(label: thirdLabel, collectionView: thirdCollectionView, subject: randomTopics[2])
         firstCollectionView.tag = 0
         secondCollectionView.tag = 1
         thirdCollectionView.tag = 2
