@@ -76,11 +76,11 @@ final class SearchViewController: UIViewController {
 
     private func makeRequestDto(_ query: String, page: Int, color: ColorParam?, sort: OrderBy?) -> SearchRequestDTO {
         SearchRequestDTO(
-           query: query,
-           page: page,
-           perPage: countPerPage,
-           orderBy: sort,
-           color: color)
+            query: query,
+            page: page,
+            perPage: countPerPage,
+            orderBy: sort,
+            color: color)
     }
 
     private var orderBy = OrderBy.relevant
@@ -225,13 +225,10 @@ extension SearchViewController: UISearchBarDelegate {
             guard !self.isEnd else { return }
 
             // 결과에 어펜드하고 화면 다시 그리기 후 첫 페이지라면 상단으로 이동
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.dataSource.append(contentsOf: response.results)
-                self.imageCollectionView.reloadData()
-                if page == 1, !dataSource.isEmpty {
-                    self.scrollToTop()
-                }
+            self.dataSource.append(contentsOf: response.results)
+            self.imageCollectionView.reloadData()
+            if page == 1, !dataSource.isEmpty {
+                self.scrollToTop()
             }
         }
     }
@@ -247,7 +244,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         dataSource.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionViewCell.identifier,
                                                             for: indexPath)
@@ -255,7 +252,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
         cell.configure(dataSource[indexPath.item])
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard indexPath.item == dataSource.count - 3, !isEnd, let currentSearchKey else { return }
         page += 1
@@ -279,7 +276,7 @@ extension SearchViewController: BasicViewProtocol {
         view.addSubview(imageCollectionView)
         view.addSubview(centerLabel)
     }
-    
+
     func configureLayout() {
         colorScrollView.snp.makeConstraints { make in
             make.horizontalEdges.top.equalTo(view.safeAreaLayoutGuide)
@@ -308,7 +305,7 @@ extension SearchViewController: BasicViewProtocol {
             make.center.equalTo(imageCollectionView)
         }
     }
-    
+
     func configureView() {
         navigationItem.title = "SEARCH PHOTO"
         view.backgroundColor = .white
