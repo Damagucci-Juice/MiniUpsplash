@@ -14,7 +14,10 @@ import Kingfisher
 
 final class SearchResultViewController: UIViewController {
 
-    private let searchBarController = UISearchController(searchResultsController: nil)
+    private lazy var searchBar = UISearchBar().then { tf in
+        tf.placeholder = "키워드 검색"
+        tf.delegate = self
+    }
 
     private let imageCollectionView = UICollectionView(frame: .zero,
                                                        collectionViewLayout: UICollectionViewLayout())
@@ -64,15 +67,8 @@ final class SearchResultViewController: UIViewController {
         return result
     }()
 
-    @objc private func orderButtonTapped() {
-        sortButton.setTitle(orderBy.text, for: .normal)
-
-        orderBy = orderBy == .relevant ? .latest : .relevant
-        validateSearch()
-    }
-
     private func validateSearch() {
-        guard let validatedText = validateText(searchBarController.searchBar.text) else { return }
+        guard let validatedText = validateText(searchBar.text) else { return }
         clearImageCache()
         resetPage(newKey: validatedText)
         Task {
@@ -166,12 +162,36 @@ final class SearchResultViewController: UIViewController {
 }
 
 extension SearchResultViewController: UISearchBarDelegate {
+
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.endEditing(true)
+        let vc = GoSearchViewController()
+        vc.hidesBottomBarWhenPushed = true
+        
+        vc.onTextFilled = { text in
+            self.searchBar.text = text
+            self.searchBarSearchButtonClicked(searchBar)
+        }
+
+        vc.onCloseButtonTapped = {
+            searchBar.text = nil
+            self.searchBarCancelButtonClicked(searchBar)
+        }
+
+        if !searchBar.text!.isEmpty {
+            vc.searchBarController.searchBar.text = searchBar.text
+        }
+
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         guard let validatedText = validateText(searchBar.text) else {
-            view.makeToast("2글자 이상 입력해주세요")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                searchBar.becomeFirstResponder()
-            }
+//            view.makeToast("2글자 이상 입력해주세요")
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+//                searchBar.becomeFirstResponder()
+//            }
             return
         }
         clearImageCache()
@@ -288,7 +308,7 @@ extension SearchResultViewController: BasicViewProtocol {
 
     func configureLayout() {
         colorScrollView.snp.makeConstraints { make in
-            make.horizontalEdges.top.equalTo(view.safeAreaLayoutGuide)
+            make.top.horizontalEdges.equalTo(view.safeAreaLayoutGuide)
             make.height.equalTo(LayoutConstant.colorFilterViewHeight)
         }
 
@@ -307,7 +327,7 @@ extension SearchResultViewController: BasicViewProtocol {
 
         imageCollectionView.snp.makeConstraints { make in
             make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(LayoutConstant.colorFilterViewHeight + 4)
+            make.top.equalTo(colorScrollView.snp.bottom).offset(4)
         }
 
         centerLabel.snp.makeConstraints { make in
@@ -320,8 +340,7 @@ extension SearchResultViewController: BasicViewProtocol {
         view.backgroundColor = .white
 
         configureColorViews()
-        configureSearchController()
-
+        configureSearchBar()
         imageCollectionView.backgroundColor = .white
         imageCollectionView.register(SearchCollectionViewCell.self,
                                      forCellWithReuseIdentifier: SearchCollectionViewCell.identifier)
@@ -334,13 +353,9 @@ extension SearchResultViewController: BasicViewProtocol {
         }
     }
 
-    private func configureSearchController() {
-        navigationItem.searchController = searchBarController
-        navigationItem.hidesSearchBarWhenScrolling = false
-        navigationItem.preferredSearchBarPlacement = .stacked
-        searchBarController.searchBar.delegate = self
-        searchBarController.searchBar.placeholder = "키워드 검색"
-        searchBarController.hidesNavigationBarDuringPresentation = false
+    private func configureSearchBar() {
+        self.navigationItem.titleView = searchBar
+        searchBar.searchTextField.clearButtonMode = .never
     }
 
     private func configureColorViews() {
@@ -348,7 +363,6 @@ extension SearchResultViewController: BasicViewProtocol {
 
         colorStackView.addArrangedSubview(totalCountLabel)
 
-        // TODO: - Color Select
         ColorParam.allCases.forEach { param in
             let button = ColorFilterButton(colorParam: param)
             button.clipsToBounds = true
@@ -357,6 +371,7 @@ extension SearchResultViewController: BasicViewProtocol {
         }
     }
 
+    // MARK: - Color, Sort Option Handlers
     private func handleColorButtonTapped(_ color: ColorParam?) {
         colorStackView.arrangedSubviews.forEach { view in
             guard let colorButton = view as? ColorFilterButton else { return }
@@ -368,4 +383,12 @@ extension SearchResultViewController: BasicViewProtocol {
 
         validateSearch()
     }
+
+    @objc private func orderButtonTapped() {
+        sortButton.setTitle(orderBy.text, for: .normal)
+
+        orderBy = orderBy == .relevant ? .latest : .relevant
+        validateSearch()
+    }
+
 }
