@@ -302,9 +302,11 @@ extension SearchResultViewController: UICollectionViewDelegate, UICollectionView
         let availableWidth = screenWidth - (hInset * 2) - (interSpacing * (itemPerRow - 1))
         let cellWidth = availableWidth / itemPerRow
 
-        let collectionViewHeight = imageCollectionView.bounds.height
-        let availableHeight = collectionViewHeight - (vInset * 2) - (lineSpacing * (itemPerCol))
-        let cellHeight = availableHeight / itemPerCol
+        /// cell width : origin width = cell height : origin height
+        /// cell height = cell width * origin height / origin width
+        // dynamic height
+        let item = dataSource[indexPath.item]
+        let cellHeight = cellWidth * Double(item.height) / Double(item.width)
         return CGSize(width: cellWidth, height: cellHeight)
     }
 }
