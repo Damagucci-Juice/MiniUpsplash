@@ -19,6 +19,14 @@ final class SearchResultViewController: UIViewController {
         tf.delegate = self
     }
 
+    private let hInset = 0.0
+    private let vInset = 10.0
+    private let lineSpacing = 2.0
+    private let interSpacing = 3.0
+    private let itemPerRow = 3.0
+    private let itemPerCol = 2.5
+    private lazy var screenWidth = view.window?.windowScene?.screen.bounds.width ?? .zero
+
     private let imageCollectionView = UICollectionView(frame: .zero,
                                                        collectionViewLayout: UICollectionViewLayout())
 
@@ -137,16 +145,9 @@ final class SearchResultViewController: UIViewController {
     func imageLayout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
-        let hInset = 0.0
-        let vInset = 10.0
-        let lineSpacing = 2.0
-        let interSpacing = 3.0
 
         layout.minimumLineSpacing = lineSpacing
         layout.minimumInteritemSpacing = interSpacing
-        let itemPerRow = 2.0
-        let itemPerCol = 2.5
-        let screenWidth = view.window?.windowScene?.screen.bounds.width ?? .zero
         let availableWidth = screenWidth - (hInset * 2) - (interSpacing * (itemPerRow - 1))
         let cellWidth = availableWidth / itemPerRow
 
@@ -265,7 +266,7 @@ extension SearchResultViewController: UISearchBarDelegate {
     }
 }
 
-extension SearchResultViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension SearchResultViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         dataSource.count
     }
@@ -295,6 +296,16 @@ extension SearchResultViewController: UICollectionViewDelegate, UICollectionView
         }
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let availableWidth = screenWidth - (hInset * 2) - (interSpacing * (itemPerRow - 1))
+        let cellWidth = availableWidth / itemPerRow
+
+        let collectionViewHeight = imageCollectionView.bounds.height
+        let availableHeight = collectionViewHeight - (vInset * 2) - (lineSpacing * (itemPerCol))
+        let cellHeight = availableHeight / itemPerCol
+        return CGSize(width: cellWidth, height: cellHeight)
     }
 }
 
