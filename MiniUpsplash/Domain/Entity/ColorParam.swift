@@ -19,6 +19,33 @@ enum ColorParam: CaseIterable {
     case teal
     case blue
 
+    var text: String {
+        switch self {
+        case .blackAndWhite:
+            return "블랙&화이트"
+        case .black:
+            return "블랙"
+        case .white:
+            return "화이트"
+        case .yellow:
+            return "옐로우"
+        case .orange:
+            return "오렌지"
+        case .red:
+            return "레드"
+        case .purple:
+            return "퍼플"
+        case .magenta:
+            return "마젠타"
+        case .green:
+            return "그린"
+        case .teal:
+            return "틸"
+        case .blue:
+            return "블루"
+        }
+    }
+
     var paramValue: String {
         switch self {
         case .blackAndWhite:
@@ -70,6 +97,20 @@ enum ColorParam: CaseIterable {
             return "#5AC8FA"    // #008080
         case .blue:
             return "#3C59FF"
+        }
+    }
+}
+
+import UIKit.UIImage
+
+extension ColorParam {
+    var circleImage: UIImage? {
+        let size: CGFloat = 16 // 버튼 내 이미지 크기
+        if self == .blackAndWhite {
+            return UIImage.circleImage(size: size, color: .white, isSplit: true)
+        } else {
+            let color = UIColor(hex: self.hex) ?? .clear
+            return UIImage.circleImage(size: size, color: color, isSplit: false)
         }
     }
 }
