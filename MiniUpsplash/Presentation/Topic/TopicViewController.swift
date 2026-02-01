@@ -18,10 +18,6 @@ final class TopicViewController: UIViewController {
     private var randomTopics = [TopicSubject]()
     private var dataSource = [[ImageDetail]]()
     private let tableView = UITableView()
-//    private lazy var refreshControl = UIRefreshControl().then { rct in
-//        rct.addTarget(self, action: #selector(refreshTopics), for: .valueChanged)
-//        tableView.refreshControl = rct
-//    }
 
     // MARK: - init
     init(service: APIProtocol) {
