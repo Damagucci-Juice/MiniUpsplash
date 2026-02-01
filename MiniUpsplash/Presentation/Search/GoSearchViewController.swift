@@ -77,9 +77,13 @@ extension GoSearchViewController: UISearchBarDelegate {
             }
             return
         }
-        datasource.insert(searchBar.text!, at: 0)
-        onTextFilled?(validated)
-        navigationController?.popViewController(animated: true)
+        requestSearch(validated)
+    }
+
+    private func requestSearch(_ text: String) {
+        datasource.insert(text.capitalized, at: 0)
+        self.navigationController?.popViewController(animated: true)
+        self.onTextFilled?(text)
     }
 
     // nil 값이면 벨리데이트 실패, 값이 있다면 제대로 리턴 된 것임
@@ -110,8 +114,7 @@ extension GoSearchViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        searchBarController.searchBar.text = datasource[indexPath.row]
-        searchBarSearchButtonClicked(searchBarController.searchBar)
+        requestSearch(datasource[indexPath.row])
     }
 
     @objc
