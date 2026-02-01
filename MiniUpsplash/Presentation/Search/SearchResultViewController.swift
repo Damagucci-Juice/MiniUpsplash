@@ -167,7 +167,7 @@ extension SearchResultViewController: UISearchBarDelegate {
         searchBar.endEditing(true)
         let vc = GoSearchViewController()
         vc.hidesBottomBarWhenPushed = true
-        
+
         vc.onTextFilled = { text in
             self.searchBar.text = text
             self.searchBarSearchButtonClicked(searchBar)
@@ -341,7 +341,6 @@ extension SearchResultViewController: BasicViewProtocol {
         view.backgroundColor = .white
 
         configureColorViews()
-        configureSearchBar()
         imageCollectionView.backgroundColor = .white
         imageCollectionView.register(SearchCollectionViewCell.self,
                                      forCellWithReuseIdentifier: SearchCollectionViewCell.identifier)
@@ -351,6 +350,8 @@ extension SearchResultViewController: BasicViewProtocol {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self else { return }
             self.imageCollectionView.collectionViewLayout = self.imageLayout()
+            self.searchBar.searchTextField.backgroundColor = .systemGray6
+            self.configureSearchBar()
         }
     }
 
