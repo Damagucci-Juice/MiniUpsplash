@@ -9,11 +9,15 @@ import UIKit
 
 import SnapKit
 import Toast
+import Then
 import Kingfisher
 
-final class SearchViewController: UIViewController {
+final class SearchResultViewController: UIViewController {
 
-    private let searchBarController = UISearchController(searchResultsController: nil)
+    private lazy var searchBar = UISearchBar().then { tf in
+        tf.placeholder = "키워드 검색"
+        tf.delegate = self
+    }
 
     private let imageCollectionView = UICollectionView(frame: .zero,
                                                        collectionViewLayout: UICollectionViewLayout())
@@ -39,6 +43,11 @@ final class SearchViewController: UIViewController {
         return label
     }()
 
+    private let totalCountLabel = UILabel().then { label in
+        label.setBody()
+        label.text = "20개"
+    }
+
     private var dataSource: [ImageDetail] = []
 
     private let service: APIProtocol
@@ -58,11 +67,22 @@ final class SearchViewController: UIViewController {
         return result
     }()
 
-    @objc private func orderButtonTapped() {
-        orderBy = orderBy == .relevant ? .latest : .relevant
-        sortButton.setTitle(orderBy.text, for: .normal)
-        // TODO: - 컬러와 마찬가지로 선택 값이 바뀔 때 페이지네이션 어떻게 할지 충분한 고민이 필요해 보임...
-        /// 어떻게 해야 말이 되는 Pagination을 구현할 수 있을까 ?
+    private func validateSearch() {
+        guard let validatedText = validateText(searchBar.text) else { return }
+        clearImageCache()
+        resetPage(newKey: validatedText)
+        Task {
+            await requestSearch(makeRequestDto(validatedText, page: page, color: selectedColor, sort: orderBy))
+        }
+    }
+
+    private func makeRequestDto(_ query: String, page: Int, color: ColorParam?, sort: OrderBy?) -> SearchRequestDTO {
+        SearchRequestDTO(
+            query: query,
+            page: page,
+            perPage: countPerPage,
+            orderBy: sort,
+            color: color)
     }
 
     private var orderBy = OrderBy.relevant
@@ -83,6 +103,7 @@ final class SearchViewController: UIViewController {
         page = 1
         isEnd = false
         dataSource.removeAll()
+        totalCountLabel.isHidden = true
     }
 
     private var currentSearchKey: String?
@@ -140,20 +161,49 @@ final class SearchViewController: UIViewController {
     }
 }
 
-extension SearchViewController: UISearchBarDelegate {
+extension SearchResultViewController: UISearchBarDelegate {
+
+    func searchBarTextDidBeginEditing(_ searchBar: UISearchBar) {
+        searchBar.endEditing(true)
+        let vc = GoSearchViewController()
+        vc.hidesBottomBarWhenPushed = true
+        
+        vc.onTextFilled = { text in
+            self.searchBar.text = text
+            self.searchBarSearchButtonClicked(searchBar)
+        }
+
+        vc.onCloseButtonTapped = {
+            searchBar.text = nil
+            self.searchBarCancelButtonClicked(searchBar)
+        }
+
+        if !searchBar.text!.isEmpty {
+            vc.searchBarController.searchBar.text = searchBar.text
+        }
+
+        navigationController?.pushViewController(vc, animated: true)
+    }
+
+
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        guard let searchText = searchBar.text,
-              !searchText.isEmpty,
-              searchText.replacingOccurrences(of: " ", with: "").count > 1 else {
-            view.makeToast("2글자 이상 입력해주세요")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                searchBar.becomeFirstResponder()
-            }
+        guard let validatedText = validateText(searchBar.text) else {
             return
         }
         clearImageCache()
-        resetPage(newKey: searchText.lowercased())
-        handleSearchReturn(searchText.lowercased())
+        resetPage(newKey: validatedText)
+        handleSearchReturn(validatedText)
+    }
+
+    // nil 값이면 벨리데이트 실패, 값이 있다면 제대로 리턴 된 것임
+    private func validateText(_ text: String?) -> String? {
+        guard let searchText = text,
+              !searchText.isEmpty else { return nil }
+
+        let withoutSpacing = searchText.replacingOccurrences(of: " ", with: "")
+        if withoutSpacing.count < 2 { return nil }
+
+        return withoutSpacing.lowercased()
     }
 
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
@@ -169,35 +219,41 @@ extension SearchViewController: UISearchBarDelegate {
     }
 
     private func handleSearchReturn(_ text: String) {
-        let requestDto = SearchRequestDTO(
-            query: text,
-            page: page,
-            perPage: countPerPage,
-            orderBy: orderBy,
-            color: selectedColor)
-
-        Task { @MainActor [weak self] in
+        Task { [weak self] in
             guard let self else { return }
-            do {
-                let successResponse = try await service.getSearch(requestDto).get()
-                if successResponse.results.isEmpty, self.page == 1 {
-                    centerLabel.text = Constant.emptyResult
-                    centerLabel.isHidden = false
-                    self.imageCollectionView.reloadData()
-                } else {
-                    centerLabel.isHidden = true
-                }
+            await self.requestSearch(makeRequestDto(text, page: self.page, color: self.selectedColor, sort: self.orderBy))
+        }
+    }
 
-                self.isEnd = successResponse.total_pages < self.page
-                guard !self.isEnd else { return }
+    private func requestSearch(_ dto: SearchRequestDTO) async {
+        do {
+            let successResponse = try await service.getSearch(dto).get()
+            handleSuccess(successResponse)
+        } catch {
+            debugPrint(error.localizedDescription)
+        }
 
-                self.dataSource.append(contentsOf: successResponse.results)
-                self.imageCollectionView.reloadData()
-                if page == 1, !dataSource.isEmpty {
-                    self.scrollToTop()
-                }
-            } catch {
-                debugPrint(error.localizedDescription)
+        func handleSuccess(_ response: SearchResponseDTO) {
+            if response.results.isEmpty, self.page == 1 {
+                // 첫 페이지에서 결과가 비었을 때,
+                centerLabel.text = Constant.emptyResult
+                centerLabel.isHidden = false
+                imageCollectionView.reloadData()
+            } else {
+                centerLabel.isHidden = true
+            }
+
+            // 마지막 페이지 처리
+            self.isEnd = response.total_pages < self.page
+            guard !isEnd else { return }
+
+            // 결과에 어펜드하고 화면 다시 그리기 후 첫 페이지라면 상단으로 이동
+            dataSource.append(contentsOf: response.results)
+            imageCollectionView.reloadData()
+            if page == 1, !dataSource.isEmpty {
+                totalCountLabel.isHidden = false
+                totalCountLabel.text = "\(response.total)개"
+                scrollToTop()
             }
         }
     }
@@ -209,11 +265,11 @@ extension SearchViewController: UISearchBarDelegate {
     }
 }
 
-extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSource {
+extension SearchResultViewController: UICollectionViewDelegate, UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         dataSource.count
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SearchCollectionViewCell.identifier,
                                                             for: indexPath)
@@ -221,7 +277,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
         cell.configure(dataSource[indexPath.item])
         return cell
     }
-    
+
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         guard indexPath.item == dataSource.count - 3, !isEnd, let currentSearchKey else { return }
         page += 1
@@ -237,7 +293,7 @@ extension SearchViewController: UICollectionViewDelegate, UICollectionViewDataSo
     }
 }
 
-extension SearchViewController: BasicViewProtocol {
+extension SearchResultViewController: BasicViewProtocol {
     func configureHierarchy() {
         view.addSubview(colorScrollView)
         colorScrollView.addSubview(colorStackView)
@@ -245,10 +301,10 @@ extension SearchViewController: BasicViewProtocol {
         view.addSubview(imageCollectionView)
         view.addSubview(centerLabel)
     }
-    
+
     func configureLayout() {
         colorScrollView.snp.makeConstraints { make in
-            make.horizontalEdges.top.equalTo(view.safeAreaLayoutGuide)
+            make.top.horizontalEdges.equalTo(view.safeAreaLayoutGuide)
             make.height.equalTo(LayoutConstant.colorFilterViewHeight)
         }
 
@@ -267,45 +323,42 @@ extension SearchViewController: BasicViewProtocol {
 
         imageCollectionView.snp.makeConstraints { make in
             make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
-            make.top.equalTo(view.safeAreaLayoutGuide).offset(LayoutConstant.colorFilterViewHeight + 4)
+            make.top.equalTo(colorScrollView.snp.bottom).offset(4)
         }
 
         centerLabel.snp.makeConstraints { make in
             make.center.equalTo(imageCollectionView)
         }
     }
-    
+
     func configureView() {
         navigationItem.title = "SEARCH PHOTO"
         view.backgroundColor = .white
 
         configureColorViews()
-        configureSearchController()
-
+        configureSearchBar()
         imageCollectionView.backgroundColor = .white
         imageCollectionView.register(SearchCollectionViewCell.self,
                                      forCellWithReuseIdentifier: SearchCollectionViewCell.identifier)
         imageCollectionView.delegate = self
         imageCollectionView.dataSource = self
+        totalCountLabel.isHidden = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self else { return }
             self.imageCollectionView.collectionViewLayout = self.imageLayout()
         }
     }
 
-    private func configureSearchController() {
-        navigationItem.searchController = searchBarController
-        navigationItem.hidesSearchBarWhenScrolling = false
-        navigationItem.preferredSearchBarPlacement = .stacked
-        searchBarController.searchBar.delegate = self
-        searchBarController.searchBar.placeholder = "키워드 검색"
-        searchBarController.hidesNavigationBarDuringPresentation = false
+    private func configureSearchBar() {
+        self.navigationItem.titleView = searchBar
+        searchBar.searchTextField.clearButtonMode = .never
     }
 
     private func configureColorViews() {
         colorScrollView.showsHorizontalScrollIndicator = false
 
-        // TODO: - Color Select
+        colorStackView.addArrangedSubview(totalCountLabel)
+
         ColorParam.allCases.forEach { param in
             let button = ColorFilterButton(colorParam: param)
             button.clipsToBounds = true
@@ -314,31 +367,24 @@ extension SearchViewController: BasicViewProtocol {
         }
     }
 
-    private func handleColorButtonTapped(_ color: ColorParam) {
+    // MARK: - Color, Sort Option Handlers
+    private func handleColorButtonTapped(_ color: ColorParam?) {
         colorStackView.arrangedSubviews.forEach { view in
             guard let colorButton = view as? ColorFilterButton else { return }
             if colorButton.colorParam != color {
                 colorButton.isSelected = false
             }
         }
+        selectedColor = color
 
-        if selectedColor == nil {
-            page = 1
-            selectedColor = color
-        } else if selectedColor != nil {
-            if selectedColor == color { //
-                selectedColor = nil
-            } else {
-                selectedColor = color
-            }
-            page = 1
-        }
-
-        // TODO: - Page 전환은 어떻게 할건가? 이미 사진 리스트가 화면에 보인 상태에서 컬러나, 정렬 버튼을 누를 때 페이징
-        /// 한다면 여기서 해야하나?
-        /// 1. 위의 코드의 문제점은 컬러를 그냥 토글만 했을 때는, 이전 페이지 기록이 사라지는 문제가 있음
-        /// 2. 만약에 컬러를 버튼을 눌렀고 검색을 시작했을 때, 중간에 색을 바꿨어... 그러면 그러면 다른 색으로 페이지네이션이 될 건데
-        /// 2-1 red,1 -> red,2 -> green 1 이 되서 총 90장이 보일 것임
-        /// 비슷한 앱들을 참고해서 페이지 어떻게 요청하는지 보자 나이키, 무신사, 크림, 29, 유니클로, 자라
+        validateSearch()
     }
+
+    @objc private func orderButtonTapped() {
+        sortButton.setTitle(orderBy.text, for: .normal)
+
+        orderBy = orderBy == .relevant ? .latest : .relevant
+        validateSearch()
+    }
+
 }

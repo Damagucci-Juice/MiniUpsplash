@@ -44,7 +44,7 @@ struct ChartView: View {
                     x: .value("Day", value.date),
                     y: .value("Value", value.value)
                 )
-                .interpolationMethod(.catmullRom) // 곡선을 더 부드럽게
+                .interpolationMethod(.catmullRom)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.blue.opacity(0.5), .blue.opacity(0.0)],
@@ -59,7 +59,6 @@ struct ChartView: View {
                     .foregroundStyle(.blue)
                     .lineStyle(StrokeStyle(lineWidth: 2, dash: [5])) // 점선으로 세련되게
                     .annotation(position: .automatic, alignment: .center) {
-                        // 현재 날짜의 데이터만 전달하도록 필터링 추천
                         TrendAnnotationView(values: historical.filter { $0.date == selectedDate },
                                             date: selectedDate,
                                             valueData: 0)

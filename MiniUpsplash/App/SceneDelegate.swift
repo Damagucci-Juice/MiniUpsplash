@@ -23,7 +23,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         #endif
 
         let topicNav = UINavigationController(rootViewController: TopicViewController(service: service))
-        let searchNav = UINavigationController(rootViewController: SearchViewController(service: service))
+        let searchNav = UINavigationController(rootViewController: SearchResultViewController(service: service))
 
         topicNav.tabBarItem = UITabBarItem(title: "토픽", image: UIImage(systemName: "laser.burst"), selectedImage: nil)
         searchNav.tabBarItem = UITabBarItem(title: "검색", image: UIImage(systemName: "sparkle.magnifyingglass"), selectedImage: nil)

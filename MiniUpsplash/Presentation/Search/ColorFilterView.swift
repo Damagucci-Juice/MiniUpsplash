@@ -12,7 +12,7 @@ import SnapKit
 final class ColorFilterButton: UIButton {
     private(set) var colorParam: ColorParam
 
-    var onColorButtonTapped: (ColorParam) -> Void = { _ in }
+    var onColorButtonTapped: (ColorParam?) -> Void = { _ in }
 
     init(colorParam: ColorParam) {
         self.colorParam = colorParam
@@ -33,7 +33,7 @@ final class ColorFilterButton: UIButton {
         /// 아니다: 요청을 원한다면 다른 버튼을 누르면 된다
         /// 내생각: 막아 놨을 때 어색했다. 끄는 것 자체도 API 요청으로 봐야할 것이다.
         isSelected.toggle()
-        onColorButtonTapped(colorParam)
+        onColorButtonTapped(isSelected ? colorParam : nil)
     }
 
     func configureButton() {
