@@ -9,7 +9,11 @@
 import Foundation
 
 final class UDManager {
-    static var searchKeys: [String] {
+    static let shared = UDManager()
+
+    private init() { }
+
+    var searchKeys: [String] {
         get {
             UserDefaults.standard.stringArray(forKey: Constant.recentSearchUDKey) ?? []
         }
@@ -21,6 +25,24 @@ final class UDManager {
                 seen.insert(str)
             }
             UserDefaults.standard.set(result, forKey: Constant.recentSearchUDKey)
+        }
+    }
+
+    var heartImageIds: Set<String> {
+        get {
+            Set(UserDefaults.standard.stringArray(forKey: Constant.heartIDUDKey) ?? [])
+        }
+
+        set {
+            UserDefaults.standard.set(Array(newValue), forKey: Constant.heartIDUDKey)
+        }
+    }
+
+    func toggleHeart(_ id: String) {
+        if heartImageIds.contains(id) {
+            heartImageIds.remove(id)
+        } else {
+            heartImageIds.insert(id)
         }
     }
 }

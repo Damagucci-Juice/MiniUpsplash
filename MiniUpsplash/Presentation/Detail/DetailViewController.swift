@@ -49,10 +49,13 @@ final class DetailViewController: UIViewController {
 
     private lazy var heartButton = UIButton().then { button in
         button.backgroundColor = .clear
-        button.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+        button.setImage(UIImage(systemName: "heart.fill"), for: .selected)
+        button.setImage(UIImage(systemName: "heart"), for: .normal)
         button.setTitleColor(.tintColor, for: .normal)
         button.addTarget(self, action: #selector(heartButtonTapped), for: .touchUpInside)
     }
+
+    var onHaertToggled: (() -> Void)?
 
     // main image
     private let posterImageView = {
@@ -122,7 +125,9 @@ final class DetailViewController: UIViewController {
     }
 
     @objc private func heartButtonTapped() {
-        print(#function)
+        UDManager.shared.toggleHeart(imageDetail.id)
+        heartButton.isSelected.toggle()
+        onHaertToggled?()
     }
 
     init(imageDetail: ImageDetail, service: APIProtocol) {
@@ -209,7 +214,7 @@ extension DetailViewController: BasicViewProtocol {
         heartButton.snp.makeConstraints { make in
             make.trailing.equalToSuperview().inset(16)
             make.centerY.equalTo(profileImageView)
-            make.size.equalTo(LayoutConstant.profileImageSize)
+            make.size.equalTo(LayoutConstant.heartSize)
         }
 
         // main image
@@ -291,6 +296,8 @@ extension DetailViewController: BasicViewProtocol {
         userNameLabel.text = imageDetail.user.username
         createdAtLabel.text = (DateManager.shared.convert(origin: imageDetail.createdAt) ?? imageDetail.createdAt) + " 게시됨"
         chartTypeSegmentedControl.selectedSegmentIndex = 0
+
+        heartButton.isSelected = UDManager.shared.heartImageIds.contains(imageDetail.id)
     }
 
     private func setupPosterImageView() {

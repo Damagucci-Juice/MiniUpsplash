@@ -288,6 +288,11 @@ extension SearchResultViewController: UICollectionViewDelegate, UICollectionView
         // cell tapped
         let item = dataSource[indexPath.item]
         let vc = DetailViewController(imageDetail: item, service: service)
+        vc.onHaertToggled = {
+            if let cell = collectionView.cellForItem(at: indexPath) as? SearchCollectionViewCell {
+                cell.toggleHeart()
+            }
+        }
         vc.hidesBottomBarWhenPushed = true
         navigationController?.pushViewController(vc, animated: true)
     }

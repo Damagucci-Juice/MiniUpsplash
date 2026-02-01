@@ -25,6 +25,17 @@ final class SearchCollectionViewCell: UICollectionViewCell {
         return StarView()
     }()
 
+    private lazy var heartButton = {
+        var conf = UIButton.Configuration.clearGlass()
+        conf.baseForegroundColor = .systemBlue
+        let result = UIButton(configuration: conf)
+        result.contentMode = .scaleAspectFill
+        result.setImage(UIImage(systemName: "heart.fill"), for: .normal)
+        result.clipsToBounds = true
+        result.isUserInteractionEnabled = false
+        return result
+    }()
+
     static let processor = DownsamplingImageProcessor(size: LayoutConstant.thumbnailPosterSize)
 
     private lazy var optimizedScale: CGFloat = {
@@ -38,6 +49,7 @@ final class SearchCollectionViewCell: UICollectionViewCell {
         super.prepareForReuse()
         imageView.kf.cancelDownloadTask()
         imageView.image = nil
+        heartButton.isHidden = true
     }
 
     override init(frame: CGRect) {
@@ -66,6 +78,11 @@ final class SearchCollectionViewCell: UICollectionViewCell {
             )
 
         starCountView.setInfo(item.likes)
+        heartButton.isHidden = !UDManager.shared.heartImageIds.contains(item.id)
+    }
+
+    func toggleHeart() {
+        heartButton.isHidden.toggle()
     }
 }
 
@@ -73,6 +90,7 @@ extension SearchCollectionViewCell: BasicViewProtocol {
     func configureHierarchy() {
         contentView.addSubview(imageView)
         contentView.addSubview(starCountView)
+        contentView.addSubview(heartButton)
     }
 
     func configureLayout() {
@@ -84,8 +102,15 @@ extension SearchCollectionViewCell: BasicViewProtocol {
             make.leading.equalTo(imageView).offset(LayoutConstant.capsulePaddingLeading)
             make.bottom.equalTo(imageView).offset(-LayoutConstant.capsulePaddingLeading)
         }
+
+        heartButton.snp.makeConstraints { make in
+            make.trailing.equalTo(imageView).offset(-LayoutConstant.capsulePaddingLeading)
+            make.bottom.equalTo(imageView).offset(-LayoutConstant.capsulePaddingLeading)
+            make.size.equalTo(LayoutConstant.heartSize)
+        }
     }
 
     func configureView() {
+        heartButton.setCorner((LayoutConstant.heartSize.height - 7) / 2)
     }
 }

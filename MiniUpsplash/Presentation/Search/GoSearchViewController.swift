@@ -32,8 +32,8 @@ final class GoSearchViewController: UIViewController {
 
 
     private var datasource: [String] {
-        get { UDManager.searchKeys }
-        set { UDManager.searchKeys = newValue }
+        get { UDManager.shared.searchKeys }
+        set { UDManager.shared.searchKeys = newValue }
     }
 
     override func viewDidLoad() {

@@ -51,6 +51,13 @@ final class TopicTableViewCell: UITableViewCell {
         collectionView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
     }
 
+    func toggleHeart(by id: String) {
+        guard let imageIndex = dataSource.firstIndex(where: { $0.id == id }) else { return }
+        if let cell = collectionView.cellForItem(at: IndexPath(row: imageIndex, section: 0)) as? SearchCollectionViewCell {
+            cell.toggleHeart()
+        }
+    }
+
     func layout() -> UICollectionViewFlowLayout {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
