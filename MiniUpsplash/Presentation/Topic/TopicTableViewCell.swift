@@ -48,6 +48,7 @@ final class TopicTableViewCell: UITableViewCell {
         self.topic = topic
         sectionHeaderLabel.text = topic.description
         collectionView.reloadData()
+        collectionView.setContentOffset(CGPoint(x: 0, y: 0), animated: false)
     }
 
     func layout() -> UICollectionViewFlowLayout {

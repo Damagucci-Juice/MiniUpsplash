@@ -18,10 +18,10 @@ final class TopicViewController: UIViewController {
     private var randomTopics = [TopicSubject]()
     private var dataSource = [[ImageDetail]]()
     private let tableView = UITableView()
-    private lazy var refreshControl = UIRefreshControl().then { rct in
-        rct.addTarget(self, action: #selector(refreshTopics), for: .valueChanged)
-        tableView.refreshControl = rct
-    }
+//    private lazy var refreshControl = UIRefreshControl().then { rct in
+//        rct.addTarget(self, action: #selector(refreshTopics), for: .valueChanged)
+//        tableView.refreshControl = rct
+//    }
 
     // MARK: - init
     init(service: APIProtocol) {
@@ -37,7 +37,7 @@ final class TopicViewController: UIViewController {
         configureHierarchy()
         configureLayout()
         configureView()
-        refreshTopics(refreshControl)
+        refreshTopics()
     }
 
     private func fetchTopics(_ topics: [TopicSubject]) async {
@@ -70,11 +70,10 @@ final class TopicViewController: UIViewController {
     }
 
     @objc
-    private func refreshTopics(_ sender: UIRefreshControl) {
+    private func refreshTopics() {
         randomTopics = TopicSubject.randomElement(for: 3)
         Task {
             await fetchTopics(randomTopics)
-            sender.endRefreshing()
         }
     }
 
@@ -106,8 +105,12 @@ extension TopicViewController: UITableViewDelegate, UITableViewDataSource {
         }
         return cell
     }
-    
 
+    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerating: Bool) {
+        if scrollView.contentOffset.y < -50 {
+            refreshTopics()
+        }
+    }
 }
 
 // MARK: - BasicViewProtocol
