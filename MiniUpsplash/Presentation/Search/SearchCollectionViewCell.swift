@@ -32,6 +32,7 @@ final class SearchCollectionViewCell: UICollectionViewCell {
         result.contentMode = .scaleAspectFill
         result.setImage(UIImage(systemName: "heart.fill"), for: .normal)
         result.clipsToBounds = true
+        result.isUserInteractionEnabled = false
         return result
     }()
 
