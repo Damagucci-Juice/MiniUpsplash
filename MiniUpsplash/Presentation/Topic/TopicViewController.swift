@@ -96,9 +96,15 @@ extension TopicViewController: UITableViewDelegate, UITableViewDataSource {
 
         cell.onImageTapped = { image in
             let vc = DetailViewController(imageDetail: image, service: self.service)
+            vc.onHaertToggled = {
+                cell.toggleHeart(by: image.id)
+            }
             vc.hidesBottomBarWhenPushed = true
             self.navigationController?.pushViewController(vc, animated: true)
         }
+
+        
+        cell.selectionStyle = .none
         return cell
     }
 
