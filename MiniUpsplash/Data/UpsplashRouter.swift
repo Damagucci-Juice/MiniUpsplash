@@ -10,7 +10,7 @@ import Alamofire
 enum UpsplashRouter: URLRequestConvertible {
     case search(SearchRequestDTO)
     case topic(TopicRequestDTO)
-    case statistics(id: Int)
+    case statistics(id: String)
 
     var baseURL: String { "https://api.unsplash.com" }
 

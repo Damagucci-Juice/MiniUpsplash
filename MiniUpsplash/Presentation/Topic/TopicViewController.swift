@@ -41,7 +41,7 @@ final class TopicViewController: UIViewController {
         let group = DispatchGroup()
         for (index, topic) in topics.enumerated() {
             group.enter()
-            service.fetch(api: .topic(.init(page: nil, kind: topic))) { (response: Result<[ImageDetail], any Error>) in
+            service.fetch(api: .topic(.init(page: nil, kind: topic)), type: [ImageDetail].self) { response in
                 switch response {
                 case .success(let success):
                     result.append((index, success))

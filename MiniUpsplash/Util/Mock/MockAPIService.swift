@@ -23,10 +23,10 @@ final class MockAPIService: APIProtocol {
            .mapError({ $0 as Error })
     }
 
-    func fetch<T>(api: UpsplashRouter, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
+    func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
         AF.request(api.endpoint)
         .validate()
-        .responseDecodable(of: T.self) { response in
+        .responseDecodable(of: type) { response in
             completionHandler(response.result.mapError({ afError in
                 APIError.default(message: afError.localizedDescription)
             }))

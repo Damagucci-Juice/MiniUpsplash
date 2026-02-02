@@ -324,7 +324,7 @@ extension DetailViewController: BasicViewProtocol {
 
     private func fetchStatistics(id: String) async {
         do {
-            let result: StaticResponseDTO = try await service.fetch(api: .statistics(id: Int(id)!)).get()
+            let result: StaticResponseDTO = try await service.fetch(api: .statistics(id: id)).get()
             self.chartData = result
             setupInfoValue(result)
             initChart(result)

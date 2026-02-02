@@ -27,13 +27,13 @@ final class APIService: APIProtocol {
             }
     }
 
-    func fetch<T>(api: UpsplashRouter, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
+    func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
         AF.request(api.endpoint,
                              method: api.method,
                              parameters: api.param,
                              headers: api.header)
         .validate()
-        .responseDecodable(of: T.self) { response in
+        .responseDecodable(of: type) { response in
             completionHandler(
                 response.result.mapError({ $0 as NSError })
             )
