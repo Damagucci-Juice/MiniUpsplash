@@ -14,7 +14,7 @@ final class APIService: APIProtocol {
 
     private init() { }
 
-    func fetch<T: Decodable>(api: UpsplashRouter) async -> Result<T, any Error> {
+    func fetch<T>(api: UpsplashRouter) async -> Result<T, any Error>  where T: Decodable {
         return await AF.request(api.endpoint,
                              method: api.method,
                              parameters: api.param,
