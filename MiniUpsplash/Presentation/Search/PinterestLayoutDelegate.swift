@@ -13,6 +13,20 @@ protocol PinterestLayoutDelegate: AnyObject {
 
 class PinterestLayout: UICollectionViewFlowLayout {
 
+    let numberOfColumns: Int
+    let padding: CGFloat
+
+    init(numberOfColumns: Int, padding: CGFloat) {
+        self.numberOfColumns = numberOfColumns
+        self.padding = padding
+        super.init()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     // delegate로 ViewController 를 나타낸다.
     weak var delegate: PinterestLayoutDelegate?
 
@@ -36,40 +50,50 @@ class PinterestLayout: UICollectionViewFlowLayout {
     // 2. 콜렉션 뷰가 처음 초기화되거나 뷰가 변경될 떄 실행됩니다. 이 메서드에서 레이아웃을
     //    미리 계산하여 메모리에 적재하고, 필요할 때마다 효율적으로 접근할 수 있도록 구현해야 합니다.
     override func prepare() {
-        guard let collectionView = collectionView, cache.isEmpty else { return }
+        guard let collectionView = collectionView else { return }
+        cache.removeAll()
+        contentHeight = 0
 
-        let numberOfColumns: Int = 2 // 한 행의 아이템 갯수
-        let cellPadding: CGFloat = 2
+        // 1. 기본 설정 변경
+        let numberOfColumns: Int = numberOfColumns // 3열로 변경
+        let cellPadding: CGFloat = padding // 패딩 2로 변경
         let cellWidth: CGFloat = contentWidth / CGFloat(numberOfColumns)
 
-        let xOffSet: [CGFloat] = [0, cellWidth] // cell 의 x 위치를 나타내는 배열
-        var yOffSet: [CGFloat] = .init(repeating: 0, count: numberOfColumns) // // cell 의 y 위치를 나타내는 배열
+        // 2. xOffset 동적 생성
+        var xOffset: [CGFloat] = []
+        for column in 0..<numberOfColumns {
+            xOffset.append(CGFloat(column) * cellWidth)
+        }
 
-        var column: Int = 0 // 현재 행의 위치
+        // 3. yOffset 초기화 (numberOfColumns 크기만큼 0으로 채움)
+        var yOffset: [CGFloat] = .init(repeating: 0, count: numberOfColumns)
+
+        var column: Int = 0
 
         for item in 0..<collectionView.numberOfItems(inSection: 0) {
-            // IndexPath 에 맞는 셀의 크기, 위치를 계산합니다.
             let indexPath = IndexPath(item: item, section: 0)
-            let imageHeight = delegate?.collectionView(collectionView, heightForPhotoAtIndexPath: indexPath) ?? 180
-            let height = cellPadding * 2 + imageHeight
 
-            let frame = CGRect(x: xOffSet[column],
-                               y: yOffSet[column],
+            // Delegate로부터 높이 계산 (여기에 패딩이 포함되지 않도록 주의)
+            let photoHeight = delegate?.collectionView(collectionView, heightForPhotoAtIndexPath: indexPath) ?? 180
+            let height = cellPadding * 2 + photoHeight
+
+            let frame = CGRect(x: xOffset[column],
+                               y: yOffset[column],
                                width: cellWidth,
                                height: height)
+
+            // 실제 셀의 프레임에 패딩 적용
             let insetFrame = frame.insetBy(dx: cellPadding, dy: cellPadding)
 
-            // 위에서 계산한 Frame 을 기반으로 cache 에 들어갈 레이아웃 정보를 추가합니다.
             let attributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
             attributes.frame = insetFrame
             cache.append(attributes)
 
-            // 콜렉션 뷰의 contentHeight 를 다시 지정합니다.
             contentHeight = max(contentHeight, frame.maxY)
-            yOffSet[column] = yOffSet[column] + height
+            yOffset[column] = yOffset[column] + height
 
-            // 다른 이미지 크기로 인해서, 한쪽 열에만 이미지가 추가되는 것을 방지합니다.
-            column = yOffSet[0] > yOffSet[1] ? 1 : 0
+            // 가장 높이가 낮은 열(column)을 찾아 다음 아이템 배치
+            column = yOffset.enumerated().min(by: { $0.element < $1.element })?.offset ?? 0
         }
     }
 

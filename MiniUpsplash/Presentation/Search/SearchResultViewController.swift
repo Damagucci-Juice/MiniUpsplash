@@ -21,9 +21,9 @@ final class SearchResultViewController: UIViewController {
 
     private let hInset = 0.0
     private let vInset = 10.0
-    private let lineSpacing = 2.0
+    private let lineSpacing = 1.0
     private let interSpacing = 3.0
-    private let itemPerRow = 3.0
+    private let itemPerRow = 3
     private let itemPerCol = 2.5
     private lazy var screenWidth = view.window?.windowScene?.screen.bounds.width ?? .zero
 
@@ -257,7 +257,7 @@ extension SearchResultViewController: UISearchBarDelegate {
 extension SearchResultViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, PinterestLayoutDelegate {
 
     func collectionView(_ collectionView: UICollectionView, heightForPhotoAtIndexPath indexPath: IndexPath) -> CGFloat {
-        let cellWidth: CGFloat = (view.bounds.width - 4) / 2 // 셀 가로 크기
+        let cellWidth: CGFloat = (view.bounds.width - 4) / CGFloat(itemPerRow) // 셀 가로 크기
         let item = dataSource[indexPath.item]
         let imageRatio: Double = Double(item.height) / Double(item.width) // 이미지 비율
 
@@ -349,7 +349,7 @@ extension SearchResultViewController: BasicViewProtocol {
         totalCountLabel.isHidden = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self else { return }
-            let pinterestLayout = PinterestLayout()
+            let pinterestLayout = PinterestLayout(numberOfColumns: itemPerRow, padding: lineSpacing)
             pinterestLayout.delegate = self
             self.imageCollectionView.collectionViewLayout = pinterestLayout
             self.searchBar.searchTextField.backgroundColor = .systemGray6
