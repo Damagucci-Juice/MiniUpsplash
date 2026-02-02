@@ -314,11 +314,11 @@ extension DetailViewController: BasicViewProtocol {
             options: [
                 .processor(processor),
                 .scaleFactor(optimizedScale),
-                .cacheSerializer(FormatIndicatedCacheSerializer.jpeg),
+                .memoryCacheExpiration(.expired),
+                .diskCacheExpiration(.expired),
                 .transition(.fade(0.3))
             ]
         )
-
         posterImageView.backgroundColor = .lightGray
     }
 

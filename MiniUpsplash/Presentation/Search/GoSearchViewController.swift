@@ -44,15 +44,6 @@ final class GoSearchViewController: UIViewController {
         configureView()
     }
 
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            print("0.1초뒤 리스폰더 설정")
-            self.searchBarController.searchBar.becomeFirstResponder()
-        }
-    }
-
-
     private func configureSearchController() {
         navigationItem.searchController = searchBarController
         navigationItem.hidesSearchBarWhenScrolling = false
@@ -81,11 +72,11 @@ extension GoSearchViewController: UISearchBarDelegate {
     }
 
     private func requestSearch(_ text: String) {
+        view.endEditing(true)
         datasource.insert(text.capitalized, at: 0)
         recentTableView.reloadData()
-        view.endEditing(true)
-        self.navigationController?.popViewController(animated: true)
         self.onTextFilled?(text)
+        self.navigationController?.popViewController(animated: true)
     }
 
     // nil 값이면 벨리데이트 실패, 값이 있다면 제대로 리턴 된 것임
