@@ -7,6 +7,8 @@
 
 import UIKit
 
+import Kingfisher
+
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -15,6 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         // TODO: - NavigationAppearance 수정
+        setupKingfisherCache()
         return true
     }
 
@@ -32,6 +35,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
 
+    private func setupKingfisherCache() {
+        let cache = ImageCache.default
+        cache.memoryStorage.config.totalCostLimit = 300 * 1024 * 1024
+        cache.diskStorage.config.sizeLimit = 1024 * 1024 * 1024 
+    }
 
 }
 

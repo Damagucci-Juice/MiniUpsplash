@@ -36,7 +36,7 @@ final class SearchCollectionViewCell: UICollectionViewCell {
         return result
     }()
 
-    static let processor = DownsamplingImageProcessor(size: LayoutConstant.thumbnailPosterSize)
+    private lazy var processor = DownsamplingImageProcessor(size: LayoutConstant.thumbnailPosterSize)
 
     private lazy var optimizedScale: CGFloat = {
         // 3.0 기기에서도 1.5의 해상도만 사용
@@ -70,9 +70,11 @@ final class SearchCollectionViewCell: UICollectionViewCell {
             .setImage(
                 with: URL(string: item.urls.small),
                 options: [
-                    .processor(Self.processor),
+                    .processor(processor),
                     .scaleFactor(optimizedScale),
                     .cacheSerializer(FormatIndicatedCacheSerializer.jpeg),
+                    .diskCacheExpiration(.seconds(604_800)),
+                    .memoryCacheExpiration(.seconds(3600)),
                     .transition(.fade(0.2))
                 ]
             )

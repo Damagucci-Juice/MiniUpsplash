@@ -75,6 +75,15 @@ final class SearchResultViewController: UIViewController {
         return result
     }()
 
+    private lazy var colorFilterButtons: [ColorFilterButton] = {
+        return ColorParam.allCases.map { param in
+            let button = ColorFilterButton(colorParam: param)
+            button.clipsToBounds = true
+            button.onColorButtonTapped = handleColorButtonTapped
+            return button
+        }
+    }()
+
     private func validateSearch() {
         guard let validatedText = validateText(searchBar.text) else { return }
         clearImageCache()
@@ -145,6 +154,11 @@ final class SearchResultViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         searchBarSearchButtonClicked(searchBar)
+    }
+
+    @objc private func colorStackviewTapped() {
+        print(#function)
+        imageCollectionView.stopScrollingAndZooming()
     }
 }
 
@@ -328,7 +342,7 @@ extension SearchResultViewController: BasicViewProtocol {
 
         imageCollectionView.snp.makeConstraints { make in
             make.horizontalEdges.bottom.equalTo(view.safeAreaLayoutGuide)
-            make.top.equalTo(colorScrollView.snp.bottom).offset(4)
+            make.top.equalTo(view.safeAreaLayoutGuide).offset(LayoutConstant.colorFilterViewHeight + 4)
         }
 
         centerLabel.snp.makeConstraints { make in
@@ -366,33 +380,53 @@ extension SearchResultViewController: BasicViewProtocol {
         colorScrollView.showsHorizontalScrollIndicator = false
 
         colorStackView.addArrangedSubview(totalCountLabel)
-
-        ColorParam.allCases.forEach { param in
-            let button = ColorFilterButton(colorParam: param)
-            button.clipsToBounds = true
-            button.onColorButtonTapped = handleColorButtonTapped
-            colorStackView.addArrangedSubview(button)
+        colorFilterButtons.forEach {
+            colorStackView.addArrangedSubview($0)
         }
+
+        // add tap gesture
+        let tap = UITapGestureRecognizer(target: self, action: #selector(colorStackviewTapped))
+        colorStackView.addGestureRecognizer(tap)
     }
 
     // MARK: - Color, Sort Option Handlers
     private func handleColorButtonTapped(_ color: ColorParam?) {
-        colorStackView.arrangedSubviews.forEach { view in
-            guard let colorButton = view as? ColorFilterButton else { return }
-            if colorButton.colorParam != color {
-                colorButton.isSelected = false
+        if imageCollectionView.isDecelerating  {
+            // 스크롤 중일 때
+            imageCollectionView.stopScrollingAndZooming()
+            colorFilterButtons.forEach { btn in
+                if btn.colorParam == color {
+                    btn.isSelected = false
+                }
             }
-        }
-        selectedColor = color
+        } else {
+            // 스크롤 중이 아닐 때
 
-        validateSearch()
+            // 선택된 컬러 버튼 외 선택 해제
+            colorFilterButtons.forEach { btn in
+                if btn.colorParam != color {
+                    btn.isSelected = false
+                }
+            }
+            selectedColor = color
+            
+            // 아이템 검증 및 요청
+            validateSearch()
+        }
     }
 
     @objc private func orderButtonTapped() {
-        sortButton.setTitle(orderBy.text, for: .normal)
+        if imageCollectionView.isDecelerating {
+            // 스크롤 중일 때
+            imageCollectionView.stopScrollingAndZooming()
+        } else {
+            // 스크롤 중이 아닐 때
+            sortButton.setTitle(orderBy.text, for: .normal)
 
-        orderBy = orderBy == .relevant ? .latest : .relevant
-        validateSearch()
+            orderBy = orderBy == .relevant ? .latest : .relevant
+            validateSearch()
+        }
+
     }
 
 }
