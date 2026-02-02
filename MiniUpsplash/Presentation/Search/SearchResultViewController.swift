@@ -213,7 +213,7 @@ extension SearchResultViewController: UISearchBarDelegate {
 
     private func requestSearch(_ dto: SearchRequestDTO) async {
         do {
-            let successResponse = try await service.getSearch(dto).get()
+            let successResponse: SearchResponseDTO = try await service.fetch(api: .search(dto)).get()
             handleSuccess(successResponse)
         } catch {
             debugPrint(error.localizedDescription)
@@ -254,12 +254,6 @@ extension SearchResultViewController: UISearchBarDelegate {
 extension SearchResultViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, PinterestLayoutDelegate {
 
     func collectionView(_ collectionView: UICollectionView, heightForPhotoAtIndexPath indexPath: IndexPath) -> CGFloat {
-//        let availableWidth = screenWidth - (hInset * 2) - (interSpacing * (itemPerRow - 1))
-//        let cellWidth = availableWidth / itemPerRow
-//        let item = dataSource[indexPath.item]
-//        let imageRatio: Double = Double(item.height) / Double(item.width) // 이미지 비율
-//
-//        return CGFloat(imageRatio) * cellWidth
         let cellWidth: CGFloat = (view.bounds.width - 4) / 2 // 셀 가로 크기
         let item = dataSource[indexPath.item]
         let imageRatio: Double = Double(item.height) / Double(item.width) // 이미지 비율

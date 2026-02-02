@@ -12,71 +12,32 @@ final class APIService: APIProtocol {
 
     static let shared = APIService()
 
-    private let header: HTTPHeaders = [
-        HTTPHeader(name: APIKey.authHeaderKey, value: APIKey.authHeaderValue),
-        HTTPHeader(name: APIKey.versionHeaderKey, value: APIKey.versionHeaderValue),
-    ]
-
     private init() { }
 
-    func getSearch(_ searchDto: SearchRequestDTO) async throws ->  Result<SearchResponseDTO, any Error> {
-        let urlStr = Constant.baseUrl + Constant.searchPath
-        let param = searchDto.makeParam()
-
-
-        let result = try await AF.request(urlStr,
-                                          method: .get,
-                                          parameters: param,
-                                          headers: header)
+    func fetch<T: Decodable>(api: UpsplashRouter) async -> Result<T, any Error> {
+        return await AF.request(api.endpoint,
+                             method: api.method,
+                             parameters: api.param,
+                             headers: api.header)
             .validate()
-            .serializingDecodable(SearchResponseDTO.self)
-            .value
-
-        return .success(result)
+            .serializingDecodable(T.self)
+            .result
+            .mapError { error in
+                error as NSError
+            }
     }
 
-    func getTopic(_ dto: TopicRequestDTO) async throws -> Result<[ImageDetail], any Error> {
-        let urlStr = Constant.baseUrl + "/topics" + dto.kind.queryPath + "/photos"
-        let param = dto.makeParam()
-
-        let result = try await AF.request(urlStr,
-                                          method: .get,
-                                          parameters: param,
-                                          headers: header)
-            .validate()
-            .serializingDecodable([ImageDetail].self)
-            .value
-
-        return .success(result)
-    }
-
-    func getTopic(_ dto: TopicRequestDTO, _ completion: @escaping (Result<[ImageDetail], any Error>) -> Void) {
-        let urlStr = Constant.baseUrl + "/topics" + dto.kind.queryPath + "/photos"
-        let param = dto.makeParam()
-
-        AF.request(urlStr,
-                   method: .get,
-                   parameters: param,
-                   headers: header)
+    func fetch<T>(api: UpsplashRouter, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
+        AF.request(api.endpoint,
+                             method: api.method,
+                             parameters: api.param,
+                             headers: api.header)
         .validate()
-        .responseDecodable(of: [ImageDetail].self) { response in
-            completion(response.result.mapError({ afError in
-                APIError.default(message: afError.localizedDescription)
-            }))
+        .responseDecodable(of: T.self) { response in
+            completionHandler(
+                response.result.mapError({ $0 as NSError })
+            )
         }
-    }
-
-    func getStatistic(_ imageId: String) async throws -> Result<StaticResponseDTO, any Error> {
-        let url = Constant.baseUrl + "/photos" + "/" + imageId + "/statistics"
-
-        let result = try await AF.request(url,
-                                          method: .get,
-                                          headers: header)
-            .validate()
-            .serializingDecodable(StaticResponseDTO.self)
-            .value
-
-        return .success(result)
     }
 
 }
