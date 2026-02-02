@@ -82,6 +82,8 @@ extension GoSearchViewController: UISearchBarDelegate {
 
     private func requestSearch(_ text: String) {
         datasource.insert(text.capitalized, at: 0)
+        recentTableView.reloadData()
+        view.endEditing(true)
         self.navigationController?.popViewController(animated: true)
         self.onTextFilled?(text)
     }
