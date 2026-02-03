@@ -50,6 +50,7 @@ final class GoSearchViewController: UIViewController {
         navigationItem.preferredSearchBarPlacement = .stacked
         searchBarController.searchBar.delegate = self
         searchBarController.searchBar.placeholder = "키워드 검색"
+        searchBarController.searchBar.enablesReturnKeyAutomatically = false
         searchBarController.hidesNavigationBarDuringPresentation = false
     }
 }
@@ -62,7 +63,7 @@ extension GoSearchViewController: UISearchBarDelegate {
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         guard let validated = validateText(searchBar.text) else {
-            view.makeToast("2글자 이상 입력해주세요")
+            view.makeToast("2글자 이상 입력해주세요", position: .top)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 searchBar.becomeFirstResponder()
             }
