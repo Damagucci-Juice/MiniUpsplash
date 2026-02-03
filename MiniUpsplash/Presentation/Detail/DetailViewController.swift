@@ -329,8 +329,8 @@ extension DetailViewController: BasicViewProtocol {
             setupInfoValue(result)
             initChart(result)
         } catch {
-            print("id: \(id) 통계 실패")
-            print(error.localizedDescription)
+            print("code: \(error.rawValue)")
+            print(error.errorDescription)
         }
     }
 

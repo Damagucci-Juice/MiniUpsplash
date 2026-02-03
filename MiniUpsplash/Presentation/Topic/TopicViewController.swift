@@ -45,9 +45,10 @@ final class TopicViewController: UIViewController {
                 switch response {
                 case .success(let success):
                     result.append((index, success))
-                case .failure(let failure):
+                case .failure(let error):
                     self.view.makeToast("""
-                            에러코드: \(failure.localizedDescription)
+                            에러코드: \(error.rawValue)
+                            \(error.errorDescription)
                             \(topic.description) 를 불러오는데 실패했습니다.
                             """)
                 }

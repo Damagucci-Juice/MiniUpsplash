@@ -14,7 +14,7 @@ final class APIService: APIProtocol {
 
     private init() { }
 
-    func fetch<T>(api: UpsplashRouter) async -> Result<T, any Error>  where T: Decodable {
+    func fetch<T>(api: UpsplashRouter) async -> Result<T, UpsplashError>  where T: Decodable {
         return await AF.request(api.endpoint,
                              method: api.method,
                              parameters: api.param,
@@ -22,26 +22,32 @@ final class APIService: APIProtocol {
             .validate()
             .serializingDecodable(T.self)
             .result
-            .mapError { error in
-                error as NSError
+            .mapError { afError in
+                if let status = afError.responseCode {
+                    return UpsplashError(rawValue: status) ?? .unknown
+                }
+                return .unknown
             }
     }
 
-    func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
+    func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, UpsplashError>) -> Void) where T : Decodable {
         AF.request(api.endpoint,
                              method: api.method,
                              parameters: api.param,
                              headers: api.header)
         .validate()
         .responseDecodable(of: type) { response in
-            completionHandler(
-                response.result.mapError({ $0 as NSError })
-            )
+            if let success = try? response.result.get() {
+                completionHandler(.success(success))
+            } else {
+                if let statusCode = response.response?.statusCode, let upsplashError = UpsplashError(rawValue: statusCode) {
+                    completionHandler(.failure(upsplashError))
+                    return
+                }
+
+                completionHandler(.failure(.unknown))
+            }
         }
     }
 
-}
-
-enum APIError: Error {
-    case `default`(message: String)
 }

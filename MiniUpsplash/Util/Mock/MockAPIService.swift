@@ -15,22 +15,33 @@ final class MockAPIService: APIProtocol {
 
     private init() { }
 
-    func fetch<T>(api: UpsplashRouter) async -> Result<T, any Error> where T : Decodable {
+    func fetch<T>(api: UpsplashRouter) async -> Result<T, UpsplashError> where T : Decodable {
         await AF.request(api.endpoint)
            .validate()
            .serializingDecodable(T.self)
            .result
-           .mapError({ $0 as Error })
+           .mapError { afError in
+               if let status = afError.responseCode {
+                   return UpsplashError(rawValue: status) ?? .unknown
+               }
+               return .unknown
+           }
     }
 
-    func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, any Error>) -> Void) where T : Decodable {
+    func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, UpsplashError>) -> Void) where T : Decodable {
         AF.request(api.endpoint)
         .validate()
         .responseDecodable(of: type) { response in
-            completionHandler(response.result.mapError({ afError in
-                APIError.default(message: afError.localizedDescription)
-            }))
+            if let statusCode = response.response?.statusCode, let upsplashError = UpsplashError(rawValue: statusCode) {
+                completionHandler(.failure(upsplashError))
+                return
+            }
+
+            if let success = try? response.result.get() {
+                completionHandler(.success(success))
+            } else {
+                completionHandler(.failure(.unknown))
+            }
         }
     }
-
 }

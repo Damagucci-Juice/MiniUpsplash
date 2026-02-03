@@ -43,7 +43,7 @@ final class SearchResultViewController: UIViewController {
 
     private let centerLabel: UILabel = {
         let label = UILabel()
-        label.text = Constant.trySearch
+        label.text = SearchBar.trySearch.rawValue
         label.font = .boldSystemFont(ofSize: 22)
         label.textColor = .black
         label.numberOfLines = 0
@@ -214,7 +214,7 @@ extension SearchResultViewController: UISearchBarDelegate {
     }
 
     private func resetCenterLabel() {
-        centerLabel.text = Constant.trySearch
+        centerLabel.text = SearchBar.trySearch.rawValue
         centerLabel.isHidden = false
     }
 
@@ -230,13 +230,14 @@ extension SearchResultViewController: UISearchBarDelegate {
             let successResponse: SearchResponseDTO = try await service.fetch(api: .search(dto)).get()
             handleSuccess(successResponse)
         } catch {
-            debugPrint(error.localizedDescription)
+            print("code: \(error.rawValue)")
+            print(error.errorDescription)
         }
 
         func handleSuccess(_ response: SearchResponseDTO) {
             if response.results.isEmpty, self.page == 1 {
                 // 첫 페이지에서 결과가 비었을 때,
-                centerLabel.text = Constant.emptyResult
+                centerLabel.text = SearchBar.emptyResult.rawValue
                 centerLabel.isHidden = false
                 imageCollectionView.reloadData()
             } else {
