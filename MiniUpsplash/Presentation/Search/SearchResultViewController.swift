@@ -62,6 +62,8 @@ final class SearchResultViewController: UIViewController {
 
     private var selectedColor: ColorParam?
 
+    weak var coordinator: SearchCoordinator?
+
     private lazy var sortButton = {
         let result = UIButton()
         result.setTitle(OrderBy.relevant.text, for: .normal)

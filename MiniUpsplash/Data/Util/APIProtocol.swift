@@ -6,7 +6,7 @@
 //
 import Foundation
 
-protocol APIProtocol {
+protocol APIProtocol: AnyObject {
     func fetch<T>(api: UpsplashRouter) async -> Result<T, UpsplashError> where T: Decodable
     func fetch<T>(api: UpsplashRouter, type: T.Type, completionHandler: @escaping (Result<T, UpsplashError>) -> Void) where T : Decodable
 }

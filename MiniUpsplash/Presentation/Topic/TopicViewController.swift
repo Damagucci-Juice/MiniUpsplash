@@ -25,6 +25,8 @@ final class TopicViewController: UIViewController {
         return btn
     }()
 
+    weak var coordinator: TopicCoordinator?
+
     @objc private func profileButtonTapped() {
         print(#function)
         navigationController?.pushViewController(ProfileViewController(), animated: false)
