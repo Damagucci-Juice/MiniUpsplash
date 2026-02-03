@@ -85,8 +85,17 @@ final class ProfileViewController: UIViewController {
             let month   = Int(monthTextField.text!)!
             let day     = Int(dayTextField.text!)!
 
-            view.makeToast("\(year)년 \(month)월 \(day)일에\n태어나셨군요!", position: .top)
-            confirmationButton.setTitle("효과적인 생일입니다!", for: .normal)
+            var dateComponent = DateComponents()
+            dateComponent.year = year
+            dateComponent.month = month
+            dateComponent.day = day
+            if dateComponent.isValidDate {
+                view.makeToast("\(year)년 \(month)월 \(day)일에\n태어나셨군요!", position: .top)
+                confirmationButton.setTitle("효과적인 생일입니다!", for: .normal)
+            } else {
+                view.makeToast("\(year)년 \(month)월 \(day)일은\n없는 날입니다. 정신차리세요!", position: .top)
+            }
+
         } catch {
             switch error {
             case .invalidYear:
