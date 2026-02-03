@@ -18,6 +18,17 @@ final class TopicViewController: UIViewController {
     private var randomTopics = [TopicSubject]()
     private var dataSource = [[ImageDetail]]()
     private let tableView = UITableView()
+    private lazy var profileButton = {
+        let btn = UIButton()
+        btn.setImage(UIImage(systemName: "person.crop.circle.fill"), for: .normal)
+        btn.addTarget(self, action: #selector(profileButtonTapped), for: .touchUpInside)
+        return btn
+    }()
+
+    @objc private func profileButtonTapped() {
+        print(#function)
+        navigationController?.pushViewController(ProfileViewController(), animated: false)
+    }
 
     // MARK: - init
     init(service: APIProtocol) {
@@ -129,6 +140,8 @@ extension TopicViewController: BasicViewProtocol {
     }
     
     func configureView() {
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: profileButton)
+
         tableView.delegate = self
         tableView.dataSource = self
         tableView.showsVerticalScrollIndicator = false
