@@ -89,11 +89,12 @@ final class ProfileViewController: UIViewController {
             dateComponent.year = year
             dateComponent.month = month
             dateComponent.day = day
-            if dateComponent.isValidDate {
+            if dateComponent.isValidDate(in: .autoupdatingCurrent) {
                 view.makeToast("\(year)년 \(month)월 \(day)일에\n태어나셨군요!", position: .top)
                 confirmationButton.setTitle("효과적인 생일입니다!", for: .normal)
             } else {
                 view.makeToast("\(year)년 \(month)월 \(day)일은\n없는 날입니다. 정신차리세요!", position: .top)
+                confirmationButton.setTitle("확인", for: .normal)
             }
 
         } catch {
@@ -108,7 +109,7 @@ final class ProfileViewController: UIViewController {
                 view.makeToast(error.errorDescription ?? "")
             }
             view.makeToast(error.errorDescription ?? "")
-
+            confirmationButton.setTitle("확인", for: .normal)
         }
     }
 
